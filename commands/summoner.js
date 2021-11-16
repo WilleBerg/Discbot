@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { GuildEmoji, MessageEmbed } = require('discord.js');
-const { riotApiKey } = require('C:/Users/willi/Desktop/discord/config.json');
+const { riotApiKey } = require('C:/Users/willi/Desktop/Discord bot/Discbot2/config.json');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -24,10 +24,10 @@ module.exports = {
             console.log("moving on");
         } else {
             //Fetches latest game
-            const kuk = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=20&api_key=${riotApiKey}`)
+            const list = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=20&api_key=${riotApiKey}`)
                 .then(response => response.json());
-            if(kuk.length !== 0){
-                const { info, metadata } = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/${kuk[0]}?api_key=${riotApiKey}`)
+            if(list.length !== 0){
+                const { info, metadata } = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/${list[0]}?api_key=${riotApiKey}`)
                 .then(response => response.json());
         
                 //console.log(info.gameType);
