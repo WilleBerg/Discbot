@@ -196,6 +196,21 @@
   },
   {
     "Startdatum": "2021-11-17",
+    "Starttid": "22:00",
+    "Slutdatum": "2021-11-17",
+    "Sluttid": "23:59",
+    "Kurs": "TIF085",
+    "Kurs__1": "Test för discordbot",
+    "Lokal": "EG-3503,EG-3504,EG-3505,EG-3506,EG-3507,EG-3508",
+    "Typ": "Dugga",
+    "Egen_text": "",
+    "Bokningskommentar": "",
+    "Personal": "",
+    "Klass": "TKDAT-2",
+    "Undergrupp": ""
+  },
+  {
+    "Startdatum": "2021-11-17",
     "Starttid": "13:15",
     "Slutdatum": "2021-11-17",
     "Sluttid": "17:00",
