@@ -32,12 +32,10 @@ module.exports = {
         let cHours = currentDate.getHours();
         let todayDate = `${cYear}-${cMonth}-${cDay}`;
         let nmbr = 0;
-        // Maybe implement two functions:
-        // search by date and search by type
-        // search by date is used when type is null and only looks for
-        // the next lecture
-        // search by type looks for the next event with matching type as type
-        // starts at todays date
+
+        //Maybe make lecture the one to search for if type left blank
+        //Find by date should perhaps be used if type is "next"
+
         if(type != null){
             nmbr = findByType(cHours, cMinutes, todayDate, type);
         } else {
