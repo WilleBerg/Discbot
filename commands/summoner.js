@@ -1,7 +1,8 @@
 const fetch = require('node-fetch');
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { GuildEmoji, MessageEmbed } = require('discord.js');
-const { riotApiKey } = require('C:/Users/willi/Desktop/Discord bot/Discbot2/config.json');
+const { currentDirectory } = require('./commandConfig.json') 
+const { riotApiKey } = require(`${currentDirectory}/config.json`);
 
 module.exports = {
 	data: new SlashCommandBuilder()
