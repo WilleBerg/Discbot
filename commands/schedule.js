@@ -33,16 +33,26 @@ module.exports = {
         let todayDate = `${cYear}-${cMonth}-${cDay}`;
         let nmbr = 0;
 
+        console.log("\nFinding matching date....");
+        const firstIndex = findStartDateByBinarySearch(todayDate);
+        console.log("Found todays date at index " + firstIndex + "!\n");
+
         //Maybe make lecture the one to search for if type left blank
         //Find by date should perhaps be used if type is "next"
-
         if(type != null){
             nmbr = findByType(cHours, cMinutes, todayDate, type);
         } else {
-            nmbr = findByDate(cDay,cHours,cMinutes,todayDate);
+            nmbr = findByDate(cHours,cMinutes, firstIndex, todayDate);
+            
         }
+        console.log(`Looked at ${nmbr - firstIndex} different objects!`);
         if(nmbr >= schedule.length){
-            await interaction.editReply({ content: `Found no event in schedule with type ${type}`, ephemeral: true});
+            if(type != null){
+                await interaction.editReply({ content: `Found no event in schedule with type ${type}`, ephemeral: true});
+            } else {
+                await interaction.editReply({content: `Found no event! (This is a bug)`, ephemeral: true});
+            }
+            
             console.log("We've gone to far :(");
         } else { //bad solution!! find how to end with reply
             // Kurs => Course ID, Kurs__1 => Course name 
@@ -51,8 +61,8 @@ module.exports = {
                 Personal, Klass, Undergrupp } = schedule[nmbr];
             
             
-            console.log(Kurs__1);
-            console.log(Typ);
+            console.log(`Event course: ${Kurs__1}!`);
+            console.log(`Event type: ${Typ}`);
             
             const testEmbed = new MessageEmbed()
                         .setColor('#0099FF')
@@ -69,6 +79,41 @@ module.exports = {
 	},
 };
 
+
+function findStartDateByBinarySearch(todays){
+    let start = 0;
+    let end = schedule.length;
+
+    const todayDate = Date.parse(todays);
+    let potentialFind = -1;
+    
+    let lastEnd = 0;
+    let lastStart = 0;
+    while(true){
+        if(end == lastEnd && start == lastStart){
+            break;
+        }
+
+        let middle = Math.round((start + end) / 2);;
+        const { Startdatum } = schedule[middle];
+        const thisDate = Date.parse(Startdatum);
+
+        lastEnd = end;
+        lastStart = start;
+
+        if(todayDate > thisDate){
+            start = middle;
+        } else if (todayDate < thisDate){
+            end = middle;
+        } else{
+            potentialFind = middle;
+            end = middle;
+        }
+    }
+    return potentialFind;
+}
+
+// Fix this cluttered and bad function
 function findByType(hours, minutes, todays, type){
     for(let i = 0 ; i < 140; i++){
         const { Startdatum, Typ } = schedule[i];
@@ -120,22 +165,18 @@ function findByType(hours, minutes, todays, type){
     return 140;
 }
 
-function findByDate(day, hours, minutes, todayDate){
-    for(let i = 0; i < 140; i++){
-        const { Startdatum } = schedule[i];
-        console.log(Startdatum);
-        const thisDate = Startdatum.split("-");
-        if(thisDate[2] > day){
-            console.log("Almost went too far!");
-            break;
-        }
-        if(Startdatum === todayDate){
-            console.log("Found matching date!");
-            const { Starttid } = schedule[i];
+function findByDate(hours, minutes, firstEventIndex, todaysDate){
+    for(let i = firstEventIndex; i < schedule.length; i++){
+        const { Startdatum, Starttid } = schedule[i];
+        if(Date.parse(todaysDate) == Date.parse(Startdatum)){
+            console.log(Startdatum);
             console.log(`Time for event: ${Starttid}`);
             console.log(`Current time: ${hours}:${minutes}`);
             console.log("Comparing time...");
             const splitTime = Starttid.split(":");
+
+            // Make this in to seperate function?
+            //------------------------------------------------------
             if(splitTime[0] === hours){
                 if(splitTime[1] > minutes){
                     console.log("Found the next event!");
@@ -149,7 +190,11 @@ function findByDate(day, hours, minutes, todayDate){
             }
             console.log("This event is in the past!");
             console.log();
+            //------------------------------------------------------
+        } else {
+            return i;
         }
+        
     }
-    return 140;
+    return schedule.length;  
 }
