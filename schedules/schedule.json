@@ -360,6 +360,21 @@
     "Undergrupp": ""
   },
   {
+    "Startdatum": "2021-11-19",
+    "Starttid": "23:00",
+    "Slutdatum": "2021-11-19",
+    "Sluttid": "24:00",
+    "Kurs": "DAT290",
+    "Kurs__1": "Test för bot!",
+    "Lokal": "",
+    "Typ": "Kursvärdering",
+    "Egen_text": "",
+    "Bokningskommentar": "",
+    "Personal": "",
+    "Klass": "TKDAT-2",
+    "Undergrupp": ""
+  },
+  {
     "Startdatum": "2021-11-22",
     "Starttid": "09:00",
     "Slutdatum": "2021-11-22",
