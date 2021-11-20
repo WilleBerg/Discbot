@@ -35,7 +35,7 @@ module.exports = {
 
         console.log("\nFinding matching date....");
         const firstIndex = findStartDateByBinarySearch(todayDate);
-        console.log("Found todays date at index " + firstIndex + "!\n");
+        console.log("Found date closest to todays at index " + firstIndex + "!\n");
 
         //Maybe make lecture the one to search for if type left blank
         //Find by date should perhaps be used if type is "next"
@@ -91,10 +91,12 @@ function findStartDateByBinarySearch(todays){
     let lastStart = 0;
     while(true){
         if(end == lastEnd && start == lastStart){
-            break;
+            return Math.round((start + end)/2);
+            
         }
-
-        let middle = Math.round((start + end) / 2);;
+        
+        let middle = Math.round((start + end) / 2);
+        //console.log(middle);
         const { Startdatum } = schedule[middle];
         const thisDate = Date.parse(Startdatum);
 
@@ -140,6 +142,8 @@ function findByType(hours, minutes, todays, type){
                     console.log(`Current time: ${hours}:${minutes}`);
                     console.log("Comparing time...");
                     const splitTime = Starttid.split(":");
+                    // Make this in to seperate function?
+                    //------------------------------------------------------
                     if(splitTime[0] === hours){
                         if(splitTime[1] > minutes){
                             console.log("Found the next event!");
@@ -153,6 +157,7 @@ function findByType(hours, minutes, todays, type){
                     }
                     console.log("This event is in the past!");
                     console.log();
+
                 } else {
                     console.log("Found the next event!")
                     return i;
