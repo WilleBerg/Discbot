@@ -1,0 +1,15 @@
+[
+    { "name" : "fysik för ingenjörer",            "type" : "course" , "nameTranslated" : "Fysik för ingenjörer"}, 
+    { "name" : "datastrukturer och algoritmer",   "type" : "course" , "nameTranslated" : "Datastrukturer och algoritmer"}, 
+    { "name" : "tif085",                          "type" : "course" , "nameTranslated" : "Fysik för ingenjörer"}, 
+    { "name" : "dat038",                          "type" : "course" , "nameTranslated" : "Datastrukturer och algoritmer"}, 
+    { "name" : "tda417",                          "type" : "course" , "nameTranslated" : "Datastrukturer och algoritmer"}, 
+    { "name" : "föreläsning",                     "type" : "type"   , "nameTranslated" : "Föreläsning"}, 
+    { "name" : "lecture",                         "type" : "type"   , "nameTranslated" : "Föreläsning"}, 
+    { "name" : "räkneövning",                     "type" : "type"   , "nameTranslated" : "Räkneövning"},
+    { "name" : "labb",                            "type" : "type"   , "nameTranslated" : "Laboration"},  
+    { "name" : "datorlaboration",                 "type" : "type"   , "nameTranslated" : "Datorlaboration"}, 
+    { "name" : "datalabb",                        "type" : "type"   , "nameTranslated" : "Datorlaboration"}, 
+    { "name" : "laboration",                      "type" : "type"   , "nameTranslated" : "Laboration"}, 
+    { "name" : "kursvärdering",                   "type" : "type"   , "nameTranslated" : "Kursvärdering"}
+]
