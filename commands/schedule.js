@@ -2,28 +2,27 @@ const { SlashCommandBuilder } = require('@discordjs/builders');
 const { MessageEmbed } = require('discord.js');
 const { currentDirectory } = require('./commandConfig.json');
 const schedule = require(`${currentDirectory}/schedules/schedule.json`);
+const scheduleTypes = require(`${currentDirectory}/schedules/scheduleTypes.json`)
 
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('schedule')
 		.setDescription('Replies with schedule!')
-		.addStringOption(option => option.setName('type').setDescription('Search for specific type of lesson. Lecture is default if type left blank'))
-        .addStringOption(option => option.setName('time').setDescription('Specific time you want to look at PS (tomorrow works here) PPS (not implemented yet)')),
+		.addStringOption(option => option.setName('type').setDescription('Search for specific type of lesson. Lecture is default if type left blank')),
+        //.addStringOption(option => option.setName('time').setDescription('Specific time you want to look at PS (tomorrow works here) PPS (not implemented yet)')),
 	async execute(interaction) {
         await interaction.deferReply();
         let type = interaction.options.getString('type');
-        let time = interaction.options.getString('time');
+        //let time = interaction.options.getString('time');
 
+        let assumed = findAssumedWord(scheduleTypes, type);
+        
 
         if(type != null){
-            console.log(`Starting search for ${type}`);
+            console.log(`\nStarting search for ${type}`);
         } else {
             type = "föreläsning";
             console.log("Type was left blank.\nLooking for next lecture");
-        }
-        if(time != null){
-            console.log(`Starting search at ${time}`);
-            console.log("Still not implemented btw");
         }
 
         let currentDate = new Date();
@@ -42,7 +41,7 @@ module.exports = {
         //Maybe make lecture the one to search for if type left blank
         //Find by date should perhaps be used if type is "next"
         if(type.toLowerCase() != "next"){
-            nmbr = findByType(cHours, cMinutes, todayDate, type, firstIndex);
+            nmbr = findByType(cHours, cMinutes, todayDate, assumed, firstIndex);
         } else {
             nmbr = findByDate(cHours,cMinutes, firstIndex, todayDate);
             
@@ -75,18 +74,39 @@ module.exports = {
                             {name : `Startar:` , value: `${Starttid}`, inline : true},
                             {name : `Slutar:`, value: `${Sluttid}`, inline: true},
                             {name : `Datum`, value : (`${Startdatum}`), inline : true}
-                        );
+                        ).setFooter(type != "next" ? `I assumed you meant ${assumed.nameTranslated}` : "");
             interaction.editReply({embeds: [testEmbed]});
         }
 	},
 };
 
+function getPrefix(word, length){
+    if(length > word.length){
+        return word;
+    } else {
+        return word.substring(0, length);
+    }
+}
+
+function findAssumedWord(searchValues, searchedValue){
+    if(searchedValue == null){
+        return { name : "föreläsning", type : "type" , nameTranslated : "föreläsning" };
+    }
+    for(let i = 0; i < searchValues.length; i++){
+        let currPrefix = getPrefix(searchValues[i].name, searchedValue.length);
+        if(currPrefix == searchedValue){
+            return searchValues[i];
+        }
+    }
+    return { name : "föreläsning", type : "type" , nameTranslated : "föreläsning" };
+}
 
 function findStartDateByBinarySearch(todays){
     let start = 0;
     let end = schedule.length;
 
     const todayDate = Date.parse(todays);
+    // Remove potentialFind? Is it still used?
     let potentialFind = -1;
     
     let lastEnd = 0;
@@ -111,15 +131,14 @@ function findStartDateByBinarySearch(todays){
             end = middle;
         }
     }
-    return potentialFind;
 }
 
-// Fix this cluttered and bad function
-function findByType(hours, minutes, todays, type, firstIndex){
+function findByType(hours, minutes, todays, object, firstIndex){
+    let {name, type, nameTranslated} = object;
     for(let i = firstIndex ; i < schedule.length; i++){
-        const {Typ, Startdatum} = schedule[i];
+        const {Typ, Startdatum, Starttid, Kurs__1} = schedule[i];
         console.log("Comparing types...");
-        if(type.toLowerCase() === Typ.toLowerCase()){
+        if(nameTranslated.toLowerCase() === Typ.toLowerCase() || nameTranslated.toLowerCase() == Kurs__1.toLowerCase()){
             console.log("Matching types!");
             if(Date.parse(todays) == Date.parse(Startdatum)){
                 console.log(`Time for event: ${Starttid}`);
