@@ -1,8 +1,16 @@
 const fs = require('fs');
-const { Client, Collection, Intents } = require('discord.js');
+const { Client, Collection, Intents, VoiceChannel } = require('discord.js');
 const { token, prefix } = require('./config.json');
 const ytdl = require('ytdl-core');
-const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILDS] });
+const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES] });
+const {
+	AudioPlayerStatus,
+	StreamType,
+	createAudioPlayer,
+	createAudioResource,
+	joinVoiceChannel,
+} = require('@discordjs/voice');
+
 
 client.commands = new Collection();
 
@@ -42,6 +50,18 @@ client.on('messageCreate', async message => {
     } else if (message.content.startsWith(`${prefix}stop`)) {
         stop(message, serverQueue);
         return;
+    } else if (message.content.startsWith(`${prefix}queue`)){
+        let songList = queue.get(message.guild.id);
+        if(songList != undefined){
+          let songString;
+          for(const song in songList.songs) {
+            songString += "\n" + song.title;
+          }
+          message.channel.send("Song queue: \n" + songString);
+        } else {
+          message.channel.send("Song queue empty or bot is broken <:Sadge:852903092315357204>");
+        }
+        
     } else {
         message.channel.send("You need to enter a valid command!");
     }
@@ -79,7 +99,8 @@ async function execute(message, serverQueue) {
             "I need the permissions to join and speak in your voice channel!"
         );
     }
-    try { const songInfo = await ytdl.getInfo(args[1]); } catch (error) {
+    let songInfo;
+    try { songInfo = await ytdl.getInfo(args[1]); } catch (error) {
         console.error(error);
         return message.channel.send("Could not find video");
     }
@@ -104,10 +125,14 @@ async function execute(message, serverQueue) {
         queueContruct.songs.push(song);
 
         try {
-            var connection = await voiceChannel.join();
-            queueContruct.connection = connection;
-            play(message.guild, queueContruct.songs[0]);
-            } catch (err) {
+          var connection = joinVoiceChannel({
+            channelId: voiceChannel.id,
+            guildId: message.channel.guild.id,
+            adapterCreator: message.channel.guild.voiceAdapterCreator,
+          });
+          queueContruct.connection = connection;
+          play(message.guild, queueContruct.songs[0], connection);
+          } catch (err) {
             console.log(err);
             queue.delete(message.guild.id);
             return message.channel.send(err);
@@ -125,7 +150,7 @@ async function execute(message, serverQueue) {
       );
     if (!serverQueue)
       return message.channel.send("There is no song that I could skip!");
-    serverQueue.connection.dispatcher.end();
+    serverQueue.connection.destroy();
   }
   
   function stop(message, serverQueue) {
@@ -138,26 +163,31 @@ async function execute(message, serverQueue) {
       return message.channel.send("There is no song that I could stop!");
       
     serverQueue.songs = [];
-    serverQueue.connection.dispatcher.end();
+    serverQueue.connection.destroy();
   }
   
-  function play(guild, song) {
+  function play(guild, song, connection) {
     const serverQueue = queue.get(guild.id);
     if (!song) {
       serverQueue.voiceChannel.leave();
       queue.delete(guild.id);
       return;
     }
-  
-    const dispatcher = serverQueue.connection
-      .play(ytdl(song.url))
-      .on("finish", () => {
-        serverQueue.songs.shift();
-        play(guild, serverQueue.songs[0]);
-      })
-      .on("error", error => console.error(error));
-    dispatcher.setVolumeLogarithmic(serverQueue.volume / 5);
-    serverQueue.textChannel.send(`Start playing: **${song.title}**`);
+    
+    const stream = ytdl(song.url, {filter: 'audioonly'});
+    const resource = createAudioResource(stream, { inputType: StreamType.Arbitrary });
+    const player = createAudioPlayer();
+
+    try {
+      player.play(resource);
+      connection.subscribe(player);
+      
+      player.on(AudioPlayerStatus.Idle, () => connection.destroy());
+      serverQueue.textChannel.send(`Start playing: **${song.title}**`);
+    } catch(err) {
+      console.error(err);
+      serverQueue.textChannel.send(`mb g, bot broken @sylt @sylt`);
+    }
   }
 
 
