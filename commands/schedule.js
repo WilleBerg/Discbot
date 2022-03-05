@@ -106,7 +106,7 @@ function findStartDateByBinarySearch(todays){
     let end = schedule.length;
 
     const todayDate = Date.parse(todays);
-    // Remove potentialFind? Is it still used?
+    
     let potentialFind = -1;
     
     let lastEnd = 0;
