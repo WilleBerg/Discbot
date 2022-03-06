@@ -107,7 +107,12 @@ async function execute(message, serverQueue) {
             "I need the permissions to join and speak in your voice channel!"
         );
     }
-    let args2 = await getVideoUrl(args[1]);
+	
+    let tmp = "";
+	for(let i = 0; i < args.length; i++){
+		if(i != 0) tmp += args[i] + " "	
+	}
+	let args2 = await getVideoUrl(tmp);
     console.log(args2);
     let songInfo;
     try { songInfo = await ytdl.getInfo(args2); } catch (error) {
