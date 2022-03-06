@@ -108,9 +108,9 @@ async function execute(message, serverQueue) {
         );
     }
 	
-    let tmp = "";
+  let tmp = "";
 	for(let i = 0; i < args.length; i++){
-		if(i != 0) tmp += args[i] + " "	
+		if(i != 0) tmp += args[i] + " "	;
 	}
 	let args2 = await getVideoUrl(tmp);
     console.log(args2);
