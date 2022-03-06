@@ -1,7 +1,7 @@
 const fs = require('fs');
+const fetch = require('node-fetch');
 const { Client, Collection, Intents, VoiceChannel } = require('discord.js');
-const { token, prefix } = require('./config.json');
-global.AbortController = require("node-abort-controller").AbortController;
+const { token, prefix, googleApi } = require('./config.json');
 const ytdl = require('ytdl-core');
 const ply = require('play-dl');
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES] });
@@ -107,8 +107,10 @@ async function execute(message, serverQueue) {
             "I need the permissions to join and speak in your voice channel!"
         );
     }
+    let args2 = await getVideoUrl(args[1]);
+    console.log(args2);
     let songInfo;
-    try { songInfo = await ytdl.getInfo(args[1]); } catch (error) {
+    try { songInfo = await ytdl.getInfo(args2); } catch (error) {
         console.error(error);
         return message.channel.send("Could not find video");
     }
@@ -242,5 +244,9 @@ async function execute(message, serverQueue) {
     
   }
 
+  async function getVideoUrl(searchValue){
+    const { items } = await fetch(`https://www.googleapis.com/youtube/v3/search?q=${searchValue}&key=${googleApi}`).then(respone => respone.json());
+    return `https://www.youtube.com/watch?v=${items[0].id.videoId}`;
+  }
 
 client.login(token);
