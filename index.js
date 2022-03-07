@@ -63,13 +63,16 @@ client.on('messageCreate', async message => {
         } else {
           message.channel.send("Song queue empty or bot is broken <:Sadge:852903092315357204>");
         }
-        
     } else if(message.content.startsWith(`${prefix}raindance`)){
       message.content = "!play https://www.youtube.com/watch?v=aMTLs4qfJtI";
       execute(message, serverQueue);
     } else if(message.content.startsWith(`${prefix}soviet`)){
       message.content = "!play https://www.youtube.com/watch?v=U06jlgpMtQs";
       execute(message, serverQueue);
+    } else if(message.content.startsWith(`${prefix}credit`)){
+      message.channel.send("<:gigachad:852944386816081990>@sylt<:gigachad:852944386816081990>");
+    } else if(message.content.startsWith(`${prefix}help`)){
+      message.channel.send("**!play** songName or Url - to play song\n**!skip** - to skip current song\n**!stop** - to stop bot completely\n**!q** to get current queue\n**!credit**");
     } else {
         message.channel.send("You need to enter a valid command!");
     }
