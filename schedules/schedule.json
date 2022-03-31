@@ -1,5 +1,21 @@
 [
   {
+    "Startdatum": "2022-01-01",
+    "Starttid": "08:00",
+    "Slutdatum": "2022-01-01",
+    "Sluttid": "09:45",
+    "Kurs": "EEM076",
+    "Kurs__1": "Elektriska kretsar och fält",
+    "Lokal": "HC1",
+    "Typ": "Demoövn",
+    "Egen text": "",
+    "Bokningskommentar": "",
+    "Personal": "",
+    "Klass": "TKDAT-2",
+    "Undergrupp": "",
+    "Undergrupp__1": ""
+  },
+  {
     "Startdatum": "2022-04-01",
     "Starttid": "08:00",
     "Slutdatum": "2022-04-01",

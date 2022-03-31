@@ -2,6 +2,7 @@ const fs = require('fs');
 const fetch = require('node-fetch');
 const { Client, Collection, Intents, VoiceChannel } = require('discord.js');
 const { token, prefix, googleApi } = require('./config.json');
+const { getNextScheduleEvent, getNextTime } = require('./scheduleMessage');
 const ytdl = require('ytdl-core');
 const ply = require('play-dl');
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES] });
@@ -13,6 +14,7 @@ const {
 	joinVoiceChannel,
 } = require('@discordjs/voice');
 
+let timer = 0;
 
 client.commands = new Collection();
 
@@ -26,7 +28,19 @@ for(const file of commandFiles) {
 const queue = new Map();
 
 client.once('ready', () => {
-	console.log('Ready!');});
+	console.log('Ready!');
+  setInterval( () => {
+    if(timer > 0){
+      timer -= 1000 * 60;
+      console.log(timer);
+    } else {
+      var channel = client.channels.cache.get("959114050275524728");
+      channel.send({embeds: [getNextScheduleEvent()]});
+      timer = getNextTime();
+    }
+  }, 1000 * 60);
+
+});
 client.once('reconnecting', () => {
     console.log('Reconnecting!');
 });
@@ -59,7 +73,6 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true});
     }
 });
-
 
 function handleMessage(message, serverQueue){
   if (message.content.startsWith(`${prefix}play`)) {
@@ -131,8 +144,6 @@ function clearQueue(serverQueue){
   }
 }
 
-
-
 function printQueue(message, serverQueue){
   if(serverQueue != undefined){
     let songString = "";
@@ -149,6 +160,7 @@ function printQueue(message, serverQueue){
       message.channel.send("Song queue empty or bot is broken <:Sadge:852903092315357204>");
     }
 }
+
 async function execute(message, serverQueue) {
   const args = message.content.split(" ");
   
@@ -290,6 +302,7 @@ async function play(guild, song, connection) {
     serverQueue.textChannel.send(`Start playing: **${song.title}**<a:pepeJAM:852902332164603935>`);
 
 }
+
 async function getNextResource(serverQueue){
     console.log("shifting queue...");
     serverQueue.songs.shift();

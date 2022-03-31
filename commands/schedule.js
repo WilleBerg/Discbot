@@ -77,7 +77,7 @@ module.exports = {
                         ).setFooter(type != "next" ? `I assumed you meant ${assumed.nameTranslated}` : "");
             interaction.editReply({embeds: [testEmbed]});
         }
-	},
+	}, getPrefix, findAssumedWord, findByDate, findStartDateByBinarySearch, compareTime, findByType,
 };
 
 function getPrefix(word, length){
