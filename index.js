@@ -131,6 +131,8 @@ function clearQueue(serverQueue){
   }
 }
 
+
+
 function printQueue(message, serverQueue){
   if(serverQueue != undefined){
     let songString = "";
