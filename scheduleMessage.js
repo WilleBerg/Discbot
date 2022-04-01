@@ -5,6 +5,8 @@ const scheduleTypes = require(`${currentDirectory}/schedules/scheduleTypes.json`
 const { MessageEmbed } = require('discord.js');
 
 let currentEventIndex = 0;
+var firstTime = true;
+
 
 function getNextScheduleEvent(){
     let currentDate = new Date();
@@ -50,7 +52,18 @@ function getNextScheduleEvent(){
 
 function getNextTime(){
     console.log("Getting next time");
-    const { Startdatum, Starttid } = schedule[currentEventIndex];
+    const { Startdatum, Starttid } = schedule[() => {
+        if(currentEventIndex >= schedule.length){
+            console.log("Schdule is empty");
+            return 0;
+        } else {
+            if(firstTime){
+                firstTime = false;
+                return currentEventIndex;
+            }
+            return currentEventIndex++;
+        }
+    }];
 
     let startDate = Startdatum.split('-');
     let startTime = Starttid.split(':');
