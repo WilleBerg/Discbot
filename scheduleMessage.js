@@ -9,23 +9,9 @@ var firstTime = true;
 
 
 function getNextScheduleEvent(){
-    let currentDate = new Date();
-    let cDay = currentDate.getDate();
-    let cMonth = currentDate.getMonth() + 1;
-    let cYear = currentDate.getFullYear();
-    let cMinutes = currentDate.getMinutes();
-    let cHours = currentDate.getHours();
-    let todayDate = `${cYear}-${cMonth}-${cDay}`;
     let nmbr = 0;
 
-    console.log(todayDate);
-    console.log(`${cHours}:${cMinutes}`);
-
-
-    const firstIndex = findStartDateByBinarySearch(todayDate);
-
-
-    nmbr = findByDate(cHours,cMinutes, firstIndex, todayDate);
+    nmbr = getNextEventIndex();
 
 
     currentEventIndex = nmbr;
@@ -50,23 +36,30 @@ function getNextScheduleEvent(){
     return testEmbed;
 }
 
-function getNextTime(){
-    console.log("Getting next time");
-    const { Startdatum, Starttid } = schedule[() => {
-        if(currentEventIndex >= schedule.length){
-            console.log("Schdule is empty");
-            return 0;
-        } else {
-            if(firstTime){
-                firstTime = false;
-                return currentEventIndex;
-            }
-            return currentEventIndex++;
-        }
-    }];
 
-    let startDate = Startdatum.split('-');
-    let startTime = Starttid.split(':');
+function getNextEventIndex(){
+    var now = new Date();
+    for (let i = 0; i < schedule.length; i++) {
+        const { Startdatum, Starttid } = schedule[i];
+        var then = getTimeInMilli(Startdatum, Starttid);
+        if(then.getDate == now.getDate && then.getMonth == now.getMonth && then.getFullYear == now.getFullYear){
+            if(then > now){
+                console.log(now);
+                console.log(then);
+                return i;
+            }
+        } else if(then > now){
+            console.log(now);
+            console.log(then);
+            return i;
+        }
+    }
+    return -1;
+}
+
+function getTimeInMilli(startDate, startTime){
+    startDate = startDate.split('-');
+    startTime = startTime.split(':');
 
     let startYear = startDate[0];
     let startMonth = startDate[1];
@@ -75,11 +68,29 @@ function getNextTime(){
     let startHours = startTime[0];
     let startMinutes = startTime[1];
 
-    console.log(`Next event starts at ${startHours}:${startMinutes} on ${startDay}/${startMonth}/${startYear}`);
+    var then = new Date(startYear, startMonth - 1, startDay, startHours, startMinutes);
+
+    return then;
+}
+
+function getNextTime(){
+    console.log("Getting next time");
+
+    if(currentEventIndex >= schedule.length){
+        console.log("Schdule is empty");
+        return null;
+    } else {
+        if(firstTime){
+            firstTime = false;
+            console.log("This was the first");
+        } else currentEventIndex++;
+    }
+
+    const { Startdatum, Starttid } = schedule[currentEventIndex];
 
     var now = new Date();
     now.setHours(now.getHours() + 2);
-    var then = new Date(startYear, startMonth - 1, startDay, startHours, startMinutes);
+    var then = getTimeInMilli(Startdatum, Starttid);
     then.setHours(then.getHours() + 2);
     console.log(now);
     console.log(then);
