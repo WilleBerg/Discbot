@@ -33,7 +33,7 @@ client.once('ready', () => {
     if(timer > 0){
       timer -= 1000 * 60;
     } else {
-      var channel = client.channels.cache.get("959114050275524728");
+      var channel = client.channels.cache.get("960572267635560500");
       channel.send({embeds: [getNextScheduleEvent()]});
       timer = getNextTime();
     }
