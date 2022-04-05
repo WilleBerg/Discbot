@@ -36,6 +36,7 @@ client.once('ready', () => {
     } else {
       console.log("Timer has expired!");
       var channel = client.channels.cache.get("959114050275524728");
+      channel.send("New lesson is starting in ~15 minutes!");
       channel.send({embeds: [getNextScheduleEvent()]});
       timer = getNextTime(channel);
     }
