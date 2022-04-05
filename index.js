@@ -31,7 +31,7 @@ client.once('ready', () => {
 	console.log('Ready!');
   setInterval( () => {
     if(timer > 0){
-      timer -= 1000;
+      timer -= 1000 * 60;
       //console.log(`Timer: ${timer}`);
     } else {
       console.log("Timer has expired!");
@@ -40,7 +40,7 @@ client.once('ready', () => {
       channel.send({embeds: [getNextScheduleEvent()]});
       timer = getNextTime(channel);
     }
-  }, 1000);
+  }, 1000 * 60);
 
 });
 client.once('reconnecting', () => {
