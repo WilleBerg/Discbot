@@ -36,7 +36,6 @@ function getNextScheduleEvent(){
     return testEmbed;
 }
 
-
 function getNextEventIndex(){
     var now = new Date();
     for (let i = 0; i < schedule.length; i++) {
@@ -44,13 +43,9 @@ function getNextEventIndex(){
         var then = getTimeInMilli(Startdatum, Starttid);
         if(then.getDate == now.getDate && then.getMonth == now.getMonth && then.getFullYear == now.getFullYear){
             if(then > now){
-                console.log(now);
-                console.log(then);
                 return i;
             }
         } else if(then > now){
-            console.log(now);
-            console.log(then);
             return i;
         }
     }
@@ -73,17 +68,14 @@ function getTimeInMilli(startDate, startTime){
     return then;
 }
 
-function getNextTime(){
+function getNextTime(channel){
     console.log("Getting next time");
 
-    if(currentEventIndex >= schedule.length){
+    if(currentEventIndex < schedule.length){
+        currentEventIndex++;
+    } else {
         console.log("Schdule is empty");
         return null;
-    } else {
-        if(firstTime){
-            firstTime = false;
-            console.log("This was the first");
-        } else currentEventIndex++;
     }
 
     const { Startdatum, Starttid } = schedule[currentEventIndex];
@@ -95,10 +87,36 @@ function getNextTime(){
     console.log(now);
     console.log(then);
 
-    console.log(then - now);
+    var nextTime = (then - now) - (1000 * 60 * 15);
+    if(nextTime < 0){
+        var aEvent = getAScheduleEvent(currentEventIndex);
+        channel.send("And");
+        channel.send({embeds: [aEvent]});
+        nextTime = getNextTime(channel);
+    }
+    return nextTime;
 
-    return (then - now) - (1000 * 60 * 15);
+}
 
+function getAScheduleEvent(number){
+    const { Startdatum, Starttid, Sluttid,
+        Kurs__1, Lokal, Typ } = schedule[number];
+    
+    
+    console.log(`Event course: ${Kurs__1}!`);
+    console.log(`Event type: ${Typ}`);
+    
+    const testEmbed = new MessageEmbed()
+                        .setColor('#0099FF')
+                        .setTitle(`${Typ}`)
+                        .setDescription(`${Lokal}`)
+                        .addFields(
+                            {name : `Kurs:`, value : (`${Kurs__1}`), inline : true},
+                            {name : `Startar:` , value: `${Starttid}`, inline : true},
+                            {name : `Slutar:`, value: `${Sluttid}`, inline: true},
+                            {name : `Datum`, value : (`${Startdatum}`), inline : true}
+                        );
+    return testEmbed;
 }
 
 

@@ -31,13 +31,15 @@ client.once('ready', () => {
 	console.log('Ready!');
   setInterval( () => {
     if(timer > 0){
-      timer -= 1000 * 60;
+      timer -= 1000;
+      //console.log(`Timer: ${timer}`);
     } else {
-      var channel = client.channels.cache.get("960572267635560500");
+      console.log("Timer has expired!");
+      var channel = client.channels.cache.get("959114050275524728");
       channel.send({embeds: [getNextScheduleEvent()]});
-      timer = getNextTime();
+      timer = getNextTime(channel);
     }
-  }, 1000 * 60);
+  }, 1000);
 
 });
 client.once('reconnecting', () => {
@@ -99,9 +101,21 @@ function handleMessage(message, serverQueue){
       clearQueue(serverQueue);
   } else if(message.content.startsWith(`${prefix}remove`)){
       removeFromQueue(message, serverQueue);
+  } else if(message.content.startsWith(`${prefix}kill`)){
+    if(message.author.id == "70999889231753216"){
+      exit(message);
+    } else {
+      message.channel.send("You don't have permission to do that!<:pepeLaugh2:852905715676872765>");
+    }
   } else {
       message.channel.send("You need to enter a valid command!");
   }
+}
+
+async function exit(message){
+  await message.channel.send("You killed me! <:Sadge:852903092315357204>");
+  client.destroy();
+  process.exit();
 }
 
 function removeFromQueue(message, serverQueue){
