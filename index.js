@@ -5,7 +5,7 @@ const { token, prefix, googleApi } = require('./config.json');
 const { getNextScheduleEvent, getNextTime } = require('./scheduleMessage');
 const ytdl = require('ytdl-core');
 const ply = require('play-dl');
-const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES] });
+const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_MEMBERS] });
 const {
 	AudioPlayerStatus,
 	StreamType,
@@ -13,6 +13,8 @@ const {
 	createAudioResource,
 	joinVoiceChannel,
 } = require('@discordjs/voice');
+const { sendBoop, boop } = require('./welcomeMessage');
+const { send } = require('process');
 
 let timer = 0;
 
@@ -34,11 +36,11 @@ client.once('ready', () => {
       timer -= 1000 * 60;
       //console.log(`Timer: ${timer}`);
     } else {
-      console.log("Timer has expired!");
-      var channel = client.channels.cache.get("959114050275524728");
+      //console.log("Timer has expired!");
+      //var channel = client.channels.cache.get("959114050275524728");
       
-      channel.send({embeds: [getNextScheduleEvent()]});
-      timer = getNextTime(channel);
+      //channel.send({embeds: [getNextScheduleEvent()]});
+      //timer = getNextTime(channel);
     }
   }, 1000 * 60);
 
@@ -50,6 +52,11 @@ client.once('reconnecting', () => {
     console.log('Disconnect!');
 });
 
+client.on('guildMemberAdd', member => {
+  if(member.guild.id == "982289016672120852"){
+    sendBoop(member, member.guild.channels.cache.get("982300142726156399"));
+  }
+});
 
 client.on('messageCreate', async message => {
     if(message.author.bot) return;
@@ -108,7 +115,10 @@ function handleMessage(message, serverQueue){
     } else {
       message.channel.send("You don't have permission to do that!<:pepeLaugh2:852905715676872765>");
     }
-  } else {
+  } else if(message.content.startsWith(`${prefix}boop`)){
+      boop(message.channel);
+  } 
+  else {
       message.channel.send("You need to enter a valid command!");
   }
 }
