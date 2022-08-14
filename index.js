@@ -30,6 +30,8 @@ for(const file of commandFiles) {
 const queue = new Map();
 
 client.once('ready', () => {
+  fs.writeFile('./log/log.log', 'Bot started!\n', (err) => { if(err) console.log('error', err);});
+  log(`Bot is ready!`);
 	console.log('Ready!');
   setInterval( () => {
     if(timer > 0){
@@ -84,6 +86,7 @@ client.on('interactionCreate', async interaction => {
 });
 
 function handleMessage(message, serverQueue){
+  log(`Will try to handle ${message.content}`);
   if (message.content.startsWith(`${prefix}play`)) {
       execute(message, serverQueue);
       return;
@@ -124,12 +127,14 @@ function handleMessage(message, serverQueue){
 }
 
 async function exit(message){
+  log("Exiting...");
   await message.channel.send("You killed me! <:Sadge:852903092315357204>");
   client.destroy();
   process.exit();
 }
 
 function removeFromQueue(message, serverQueue){
+  log(`Will try to remove ${message.content}`);
   const args = message.content.split(" ");
 
   const voiceChannel = message.member.voice.channel;
@@ -162,6 +167,7 @@ function removeFromQueue(message, serverQueue){
 }
 
 function clearQueue(serverQueue){
+  log("Clearing queue");
   if(serverQueue != undefined){
     serverQueue.songs = [];
     serverQueue.textChannel.send("Queue has been cleared!");
@@ -169,6 +175,7 @@ function clearQueue(serverQueue){
 }
 
 function printQueue(message, serverQueue){
+  log("Printing queue");
   if(serverQueue != undefined){
     let songString = "";
     let counter = 1;
@@ -186,6 +193,7 @@ function printQueue(message, serverQueue){
 }
 
 async function execute(message, serverQueue) {
+  log(`Will try to execute ${message.content}`);
   const args = message.content.split(" ");
   
   const voiceChannel = message.member.voice.channel;
@@ -252,6 +260,7 @@ async function execute(message, serverQueue) {
 }
 
 async function skip(message, serverQueue) {
+  log("skipping");
     if (!message.member.voice.channel)
       return message.channel.send(
         "You have to be in a voice channel to stop the music!"
@@ -271,6 +280,7 @@ async function skip(message, serverQueue) {
 }
   
 function stop(message, serverQueue) {
+  log("Stopping music");
   if (!message.member.voice.channel)
     return message.channel.send(
       "You have to be in a voice channel to stop the music!"
@@ -285,66 +295,80 @@ function stop(message, serverQueue) {
 }
 
 async function play(guild, song, connection) {
-    const serverQueue = queue.get(guild.id);
-    if (!song) {
-      serverQueue.voiceChannel.leave();
+  log(`Starting to play ${song.title}`);
+  const serverQueue = queue.get(guild.id);
+  if (!song) {
+    serverQueue.voiceChannel.leave();
+    queue.delete(guild.id);
+    return;
+  }
+  
+  const stream = await ply.stream(song.url);
+  const resource = createAudioResource(stream.stream, { inputType: stream.type });
+  const player = createAudioPlayer();
+
+  player.play(resource);
+  connection.subscribe(player);
+  serverQueue.player = player;
+
+
+
+  player.on(AudioPlayerStatus.Idle, async () => {
+    const rec = await getNextResource(serverQueue);
+    
+    if(rec != undefined) {
+      player.play(rec); 
+      serverQueue.textChannel.send(`Now playing: **${serverQueue.songs[0].title}**<a:pepeJAM:852902332164603935>`);
+    }
+    else {
+      connection.destroy();
+      serverQueue.textChannel.send(`Queue empty!\nIm leaving<a:peepoLeave:852903257256755250>`);
       queue.delete(guild.id);
-      return;
     }
     
-    const stream = await ply.stream(song.url);
-    const resource = createAudioResource(stream.stream, { inputType: stream.type });
-    const player = createAudioPlayer();
-
-    player.play(resource);
-    connection.subscribe(player);
-    serverQueue.player = player;
-
-
-
-    player.on(AudioPlayerStatus.Idle, async () => {
-      const rec = await getNextResource(serverQueue);
-      
-      if(rec != undefined) {
-        player.play(rec); 
-        serverQueue.textChannel.send(`Now playing: **${serverQueue.songs[0].title}**<a:pepeJAM:852902332164603935>`);
-      }
-      else {
-        connection.destroy();
-        serverQueue.textChannel.send(`Queue empty!\nIm leaving<a:peepoLeave:852903257256755250>`);
-        queue.delete(guild.id);
-      }
-      
-    });
-    player.on('error', error => {
-      console.error(error.message);
-      connection.destroy();
-      serverQueue.textChannel.send(`Error: **${error.message}** <:Sadge:852903092315357204> \nDestroying connection`);
-      queue.delete(serverQueue.voiceChannel.guild.id);
-      return;
-    });
-    serverQueue.textChannel.send(`Start playing: **${song.title}**<a:pepeJAM:852902332164603935>`);
-
+  });
+  player.on('error', error => {
+    console.error(error.message);
+    log(error.message);
+    connection.destroy();
+    serverQueue.textChannel.send(`Error: **${error.message}** <:Sadge:852903092315357204> \nDestroying connection`);
+    queue.delete(serverQueue.voiceChannel.guild.id);
+    return;
+  });
+  serverQueue.textChannel.send(`Start playing: **${song.title}**<a:pepeJAM:852902332164603935>`);
 }
 
 async function getNextResource(serverQueue){
-    console.log("shifting queue...");
-    serverQueue.songs.shift();
-    console.log("creating stream...");
-    if(serverQueue.songs[0] != undefined) {
-      console.log("inside if statement ffs");
-      const stream = await ply.stream(serverQueue.songs[0].url);
-      console.log("creating audio resource...");
-      const resource = createAudioResource(stream.stream, { inputType: stream.type });
-      console.log("returning resource, will try playing...");
-      return resource;
-    } else return undefined;
+  log("shifting queue...");
+  serverQueue.songs.shift();
+  log("creating stream...");
+  if(serverQueue.songs[0] != undefined) {
+    const stream = await ply.stream(serverQueue.songs[0].url);
+    log("creating audio resource...");
+    const resource = createAudioResource(stream.stream, { inputType: stream.type });
+    log("returning resource, will try playing...");
+    return resource;
+  } else return undefined;
     
 }
 
 async function getVideoUrl(searchValue){
-    const { items } = await fetch(`https://www.googleapis.com/youtube/v3/search?q=${searchValue}&key=${googleApi}`).then(respone => respone.json());
-    return `https://www.youtube.com/watch?v=${items[0].id.videoId}`;
+  log("Searching for video url...");
+  const { items } = await fetch(`https://www.googleapis.com/youtube/v3/search?q=${searchValue}&key=${googleApi}`).then(respone => respone.json());
+  return `https://www.youtube.com/watch?v=${items[0].id.videoId}`;
+}
+
+function log(message) {
+  var toSave = `[${new Date().toLocaleString()}] ${message}`;
+  console.log(toSave);
+  try {
+    fs.appendFile("./log/log.log", toSave + "\n", (err) => {
+      if(err) log(`ERROR: currently inside callback: ${err}`);
+     });
+  } catch (error) {
+    console.error(error);
+    log("Error writing to log file");
+  }
 }
 
 client.login(token);
