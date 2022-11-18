@@ -107,7 +107,13 @@ function handleMessage(message, serverQueue){
   } else if(message.content.startsWith(`${prefix}credits`)){
       message.channel.send("<:gigachad:852944386816081990>@sylt<:gigachad:852944386816081990>");
   } else if(message.content.startsWith(`${prefix}help`)){
-      message.channel.send("**!play** songName or Url - to play song\n**!skip** - to skip current song\n**!stop** - to stop bot completely\n**!q** to get current queue\n**!clearQ** - to clear the queue\n**!remove** number - to remove specific song from queue\n**!credits**");
+      message.channel.send("**!play** songName or Url - to play song\n" +
+     "**!skip** - to skip current song\n" +
+     "**!stop** - to stop bot completely\n" + 
+     "**!q** to get current queue\n" +
+     "**!clearQ** - to clear the queue\n" + 
+     "**!remove** number - to remove specific song from queue\n" + 
+     "**!credits**");
   } else if(message.content.startsWith(`${prefix}clearQ`)){
       clearQueue(serverQueue);
   } else if(message.content.startsWith(`${prefix}remove`)){
