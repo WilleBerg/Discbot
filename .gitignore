@@ -5,3 +5,7 @@ config.json
 commandConfig.json
 package-lock.json
 package.json
+scriptConfig.json
+*.log
+log/log.log
+__pycache__
