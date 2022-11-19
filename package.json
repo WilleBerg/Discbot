@@ -19,6 +19,7 @@
     "ffmpeg-static": "^4.4.1",
     "fluent-ffmpeg": "^2.1.2",
     "libsodium-wrappers": "^0.7.9",
+    "mongodb": "4.12",
     "node-abort-controller": "^3.0.1",
     "nodemon": "^2.0.15",
     "play-dl": "^1.8.9",
