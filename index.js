@@ -1,10 +1,13 @@
+
+// PACKAGES
 const fs = require('fs');
 const fetch = require('node-fetch');
-const { Client, Collection, Intents, VoiceChannel } = require('discord.js');
-const { token, prefix, googleApi } = require('./config.json');
-const { getNextScheduleEvent, getNextTime } = require('./scheduleMessage');
 const ytdl = require('ytdl-core');
 const ply = require('play-dl');
+
+// DISCORDJS
+const { Client, Collection, Intents, VoiceChannel } = require('discord.js');
+const { token, prefix, googleApi } = require('./config.json');
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_MEMBERS] });
 const {
 	AudioPlayerStatus,
@@ -13,8 +16,13 @@ const {
 	createAudioResource,
 	joinVoiceChannel,
 } = require('@discordjs/voice');
+
+// IMPORTED FUNCTIONS
+const { getNextScheduleEvent, getNextTime } = require('./scheduleMessage');
 const { sendBoop, boop } = require('./welcomeMessage');
 const { send } = require('process');
+const { checkUser, registerUser, connect, close, userAllowAccess, setSessionKey, startDuoScrobble, stopDuoScrobble} = require('./userHandler.js');
+const { start } = require('repl');
 
 let timer = 0;
 
@@ -29,10 +37,10 @@ for(const file of commandFiles) {
 
 const queue = new Map();
 
-client.once('ready', () => {
+client.once('ready', async () => {
+  await connect();
   fs.writeFile('./log/log.log', 'Bot started!\n', (err) => { if(err) console.log('error', err);});
   log(`Bot is ready!`);
-	console.log('Ready!');
   setInterval( () => {
     if(timer > 0){
       timer -= 1000 * 60;
@@ -87,26 +95,41 @@ client.on('interactionCreate', async interaction => {
 
 function handleMessage(message, serverQueue){
   log(`Will try to handle ${message.content}`);
+  // !play
   if (message.content.startsWith(`${prefix}play`)) {
       execute(message, serverQueue);
       return;
-  } else if (message.content.startsWith(`${prefix}skip`)) {
+  }
+  // !skip 
+  else if (message.content.startsWith(`${prefix}skip`)) {
       skip(message, serverQueue);
       return;
-  } else if (message.content.startsWith(`${prefix}stop`)) {
+  } 
+  // !stop
+  else if (message.content.startsWith(`${prefix}stop`)) {
       stop(message, serverQueue);
       return;
-  } else if (message.content.startsWith(`${prefix}q`)){
+  } 
+  // !queue
+  else if (message.content.startsWith(`${prefix}q`)){
       printQueue(message, serverQueue);
-  } else if(message.content.startsWith(`${prefix}raindance`)){
+  } 
+  // !raindance
+  else if(message.content.startsWith(`${prefix}raindance`)){
       message.content = "!play https://www.youtube.com/watch?v=aMTLs4qfJtI";
       execute(message, serverQueue);
-  } else if(message.content.startsWith(`${prefix}soviet`)){
+  } 
+  // !soviet
+  else if(message.content.startsWith(`${prefix}soviet`)){
       message.content = "!play https://www.youtube.com/watch?v=U06jlgpMtQs";
       execute(message, serverQueue);
-  } else if(message.content.startsWith(`${prefix}credits`)){
+  } 
+  // !credits
+  else if(message.content.startsWith(`${prefix}credits`)){
       message.channel.send("<:gigachad:852944386816081990>@sylt<:gigachad:852944386816081990>");
-  } else if(message.content.startsWith(`${prefix}help`)){
+  }
+  // !help
+  else if(message.content.startsWith(`${prefix}help`)){
       message.channel.send("**!play** songName or Url - to play song\n" +
      "**!skip** - to skip current song\n" +
      "**!stop** - to stop bot completely\n" + 
@@ -114,26 +137,115 @@ function handleMessage(message, serverQueue){
      "**!clearQ** - to clear the queue\n" + 
      "**!remove** number - to remove specific song from queue\n" + 
      "**!credits**");
-  } else if(message.content.startsWith(`${prefix}clearQ`)){
+  } 
+  // !clearQ
+  else if(message.content.startsWith(`${prefix}clearQ`)){
       clearQueue(serverQueue);
-  } else if(message.content.startsWith(`${prefix}remove`)){
+  } 
+  // !remove
+  else if(message.content.startsWith(`${prefix}remove`)){
       removeFromQueue(message, serverQueue);
-  } else if(message.content.startsWith(`${prefix}kill`)){
+  } 
+  // !kill
+  else if(message.content.startsWith(`${prefix}kill`)){
     if(message.author.id == "70999889231753216"){
       exit(message);
     } else {
       message.channel.send("You don't have permission to do that!<:pepeLaugh2:852905715676872765>");
     }
-  } else if(message.content.startsWith(`${prefix}boop`)){
+  } 
+  // !boop
+  else if(message.content.startsWith(`${prefix}boop`)){
       boop(message.channel);
   } 
+  // !register
+  else if(message.content.startsWith(`${prefix}register`)){
+      register(message);
+  }
+  // !allowaccess
+  else if(message.content.startsWith(`${prefix}allowaccess`)){
+      allowAccess(message);
+  }
+  // !setupLastFM
+  else if(message.content.startsWith(`${prefix}setupLastFM`)){
+      setupLastFM(message);
+  }
+  // !duoscrobble
+  else if(message.content.startsWith(`${prefix}duoscrobble`)){
+      duoscrobble(message);
+  }
+  // !stopscrobbling
+  else if(message.content.startsWith(`${prefix}stopscrobbling`)){
+      stopscrobbling(message);
+  }
   else {
       message.channel.send("You need to enter a valid command!");
+  }
+}
+async function stopscrobbling(message){
+  log(`Will try to stop scrobbling for ${message.author.username}`);
+  await message.channel.send("Will try to stop scrobbling for you!");
+  stopDuoScrobble(message.author)
+}
+
+async function duoscrobble(message){
+  var args = message.content.split(" ");
+  if(args.length < 2){
+      await message.channel.send("You need to enter a valid username!");
+      return;
+  }
+  var userToListen = args[1];
+  log(`Will try to scrobble ${userToListen}'s songs for ${message.author.username}`);
+  await message.channel.send(`Will try to scrobble ${userToListen}'s songs for ${message.author.username}`);
+  var result = startDuoScrobble(message.author, userToListen);
+  if(result == false){
+      await message.channel.send("Something went wrong!\nHave you registered you LastFM account?");
+  }
+}
+  
+
+async function setupLastFM(message){
+  const resp = await setSessionKey(message.author)
+  if (resp == true) {
+    message.channel.send("You have successfully set up your LastFM account!\n" +
+    "You should now be able to use **!duoscrobble** \"**userToDuoScrobble**\"");
+  } else {
+    message.channel.send("Something went wrong");
+  }
+}
+
+async function allowAccess(message){
+  var allowAccessResult = await userAllowAccess(message);
+  if(!allowAccessResult){
+    message.channel.send("Something went wrong!");
+  }
+}
+
+async function register(message){
+  var userCheck = await checkUser(message.author);
+  if(userCheck == true){
+    log("User exists!");
+    await message.channel.send("User exists!");
+  } else if (userCheck == false){
+    log("User doesn't exist!");
+    await message.channel.send("User doesn't exist, will try registering!");
+    var userRegistrationResult = await registerUser(message.author);
+    if(userRegistrationResult == true){
+      log("User registered!");
+      await message.channel.send("User registered!");
+    } else {
+      log("User registration failed!");
+      await message.channel.send("User registration failed!");
+    }
+  } else {
+    log("Error!");
+    await message.channel.send("Error!");
   }
 }
 
 async function exit(message){
   log("Exiting...");
+  await close();
   await message.channel.send("You killed me! <:Sadge:852903092315357204>");
   client.destroy();
   process.exit();
@@ -378,3 +490,5 @@ function log(message) {
 }
 
 client.login(token);
+
+module.exports = { log };
