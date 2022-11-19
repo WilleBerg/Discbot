@@ -1,4 +1,15 @@
 
+
+const { MongoClient, ServerApiVersion } = require('mongodb');
+const uri = "mongodb+srv://carlwilliamberg:<password>@cluster0.2medxb5.mongodb.net/?retryWrites=true&w=majority";
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+client.connect(err => {
+  const collection = client.db("test").collection("devices");
+  // perform actions on the collection object
+  client.close();
+});
+
+
 // These functions should be called with message.author as the argument
 // from index.js
 
@@ -22,11 +33,11 @@ function createUserObject(user) {
 
     // All of this depends on how discord handles users
     let newUser = {
-        id: user.id,
-        username: user.username,
-        hasAllowedAccess: false,
-        hasSessionKey : false,
-        sessionKey: null
+        "_id": user.id,
+        "username": user.username,
+        "hasAllowedAccess": false,
+        "hasSessionKey" : false,
+        "sessionKey": null
     }
 
     return newUser;
@@ -40,3 +51,6 @@ function createSessionKey(user) {
     // Create session key
     // Save session key to user
 }
+
+
+  
