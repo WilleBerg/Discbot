@@ -8,6 +8,7 @@ seperate function, but instead just call it once.
 
 */
 
+// TODO: Add child check function
 
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const { mongoUsername, mongoPassword, mongoUrl } = require('./config.json');
@@ -15,6 +16,7 @@ const uri = `mongodb+srv://${ mongoUsername }:${ mongoPassword }@${ mongoUrl }/?
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 const { PythonShell } =require('python-shell');
 var fs = require('fs');
+const { spawn } = require('node:child_process');
 
 children = [];
 
@@ -304,16 +306,34 @@ async function runlastFMScript(user, userToListen) {
     }
 }
 
-function startDuoScrobble(user, userToListen) {
+async function startDuoScrobble(user, userToListen) {
+    try{
+        log("Running lastFM script");
+        let sessionKey = await getSessionKey(user);
+        log(`Session key for user ${user.username}: ${sessionKey}`);
+    } catch (error) {
+        log(error.stack);
+        log("Could not get session key");
+        return false;
+    }
     if(children.length == 0) {
-        var result = runlastFMScript(user, userToListen);
+        //var result = runlastFMScript(user, userToListen);
+        var script = spawn('python3', ['./scripts/lfmds.py', user.id, userToListen]);
+        
+        script.on('close', (code) => {
+            log(`child process exited with code ${code}`);
+        });
+        child = { "id": user.id, "childProcess" : script };
+        children.push(child);
     } else {
+        // Do nothing here??? Why create new child process if one already exists?
         for (let i = 0; i < children.length; i++) {
             if (children[i]["id"] == user.id) {
-                if(children[i]["shell"].terminated == false) {
-                    children[i]["shell"].end();
+                if(children[i]["childProcess"].exitCode == null) {
+                    // terminate child process
+                    children[i]["childProcess"].kill();
                     log("Terminated child of user " + user.username);
-                    children.remove(i);
+                    removeAtWithSplice(children, i);
                     break;
                 }
             }
@@ -322,24 +342,65 @@ function startDuoScrobble(user, userToListen) {
     }
     return result;
 }
-function stopDuoScrobble(user) {
+async function stopDuoScrobble(user) {
     if(children.length == 0) {
         log("No children to kill");
         return;
     } else {
-        for (let i = 0; i < children.length; i++) {
-            if (children[i]["id"] == user.id) {
-                if(children[i]["shell"].terminated == false) {
-                    children[i]["shell"].end();
-                    children.remove(i);
-                    log("Killed child of user " + user.username);
-                    return;
-                }
-            }
-        }
+        await killChild(user)
     }
     
 }
+
+async function killChild(user){
+    log("Attempting to kill child");
+    for (let i = 0; i < children.length; i++) {
+        if (children[i]["id"] == user.id) {
+            if(children[i]["childProcess"].errorCode == null) {
+
+                const { success, err = '', results } = await new Promise( (resolve, reject) => {
+                    // result is an array consisting of messages collected
+                    //during execution of script.
+                    try {
+                        children[i]["childProcess"].kill();
+                        result = children[i]["childProcess"].errorCode;
+                        resolve({ success: true, results: result });
+                    } catch (error) {
+                        log(error.stack);
+                        log("Could not kill child");
+                        reject({ success: false, error });
+                    }
+                });
+                removeAtWithSplice(children,i);
+                log("Killed child of user " + user.username);
+                log(`Results: \nSuccess? ${success} \n Error: ${err} \n Results: ${results}`);
+                return success;
+            } 
+        } else if(children[i]["childProcess"].errorCode != null) {
+            log("Child of user with id " + children[i]["id"] + " was found dead");
+            log("Removing child from list");
+            removeAtWithSplice(children,i);
+            i = 0;
+            continue;
+        }
+    }
+}
+
+async function killAllChildren() {
+    for (let i = 0; i < children.length; i++) {
+        if(children[i]["childProcess"].errorCode == null) {
+            children[i]["childProcess"].kill();
+            log("Killed child of user with id " + children[i]["id"]);
+        }
+    }
+    children = [];
+}
+
+function removeAtWithSplice(array, index) {
+    const copy = [...array];
+    copy.splice(index, 1);
+    return copy;
+  }
 
 function log(message) {
     var toSave = `[${new Date().toLocaleString()}] ${message}`;
@@ -353,7 +414,7 @@ function log(message) {
       log("Error writing to log file");
     }
   }
-module.exports = { checkUser, registerUser, hasSessionKey, setSessionKey, connect, close, userAllowAccess, startDuoScrobble, stopDuoScrobble };
+module.exports = { checkUser, registerUser, hasSessionKey, setSessionKey, connect, close, userAllowAccess, startDuoScrobble, stopDuoScrobble, killAllChildren };
 
 
   

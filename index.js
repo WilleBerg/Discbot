@@ -21,7 +21,7 @@ const {
 const { getNextScheduleEvent, getNextTime } = require('./scheduleMessage');
 const { sendBoop, boop } = require('./welcomeMessage');
 const { send } = require('process');
-const { checkUser, registerUser, connect, close, userAllowAccess, setSessionKey, startDuoScrobble, stopDuoScrobble} = require('./userHandler.js');
+const { checkUser, registerUser, connect, close, userAllowAccess, setSessionKey, startDuoScrobble, stopDuoScrobble, killAllChildren} = require('./userHandler.js');
 const { start } = require('repl');
 
 let timer = 0;
@@ -94,6 +94,9 @@ client.on('interactionCreate', async interaction => {
 });
 
 function handleMessage(message, serverQueue){
+  // TODO: Redo this please
+  // Perhaps a for-loop, just looping through commands?
+  // But how to call correct function?
   log(`Will try to handle ${message.content}`);
   // !play
   if (message.content.startsWith(`${prefix}play`)) {
@@ -174,9 +177,25 @@ function handleMessage(message, serverQueue){
   else if(message.content.startsWith(`${prefix}duoscrobble`)){
       duoscrobble(message);
   }
-  // !stopscrobbling
-  else if(message.content.startsWith(`${prefix}stopscrobbling`)){
+  // !scrobblestop
+  else if(message.content.startsWith(`${prefix}scrobblestop`)){
       stopscrobbling(message);
+    }
+  // !kachow
+  // ty copilot
+  else if(message.content.startsWith(`${prefix}kachow`)){
+      message.channel.send("https://tenor.com/view/kachow-cars-insane-kachow-gif-20913646");
+  }
+  // !childrenkill
+  else if(message.content.startsWith(`${prefix}childrenkill`)){
+    if(message.author.id == "70999889231753216"){
+      killAllChildren();
+      log("Killed all children");
+      message.channel.send("Killed all children");
+
+    } else {
+      message.channel.send("You don't have permission to do that!<:pepeLaugh2:852905715676872765>");
+    }
   }
   else {
       message.channel.send("You need to enter a valid command!");
