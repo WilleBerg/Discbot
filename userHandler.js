@@ -17,12 +17,12 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 const { PythonShell } =require('python-shell');
 var fs = require('fs');
 const { spawn } = require('node:child_process');
-
+const DEBUGGING = false;
 
 async function connect() {
     try {
         await client.connect();
-        log("Connected correctly to server");
+        alwaysLog("Connected correctly to server");
         return true;
     } catch (err) {
         console.log(err.stack);
@@ -33,7 +33,7 @@ async function connect() {
 async function close() {
     try {
         await client.close();
-        log("Closed connection");
+        alwaysLog("Closed connection");
     } catch (err) {
         console.log(err.stack);
         log(err.stack);
@@ -71,7 +71,7 @@ async function checkUser(user) {
             return true;
         }
     } catch (error) {
-        log(error.stack);
+        alwaysLog(error.stack);
         return 'error';
     }
     
@@ -98,7 +98,7 @@ async function registerUser(user) {
             return false;
         }
     } catch (err) {
-        log(err.stack);
+        alwaysLog(err.stack);
         return false;
     }
 }
@@ -130,7 +130,7 @@ async function hasAllowedAccess(user) {
             return true;
         } else return false;
     } catch (error) {
-        log(error.stack);
+        alwaysLog(error.stack);
         return false;
     }
     
@@ -145,7 +145,7 @@ async function hasSessionKey(user) {
             return true;
         } else return false;
     } catch (error) {
-        log(error.stack);
+        alwaysLog(error.stack);
         return false;
     }
 }
@@ -158,7 +158,7 @@ async function getToken(user) {
         log(JSON.stringify(userInfo));
         return userInfo["lastFMToken"];
     } catch (error) {
-        log(error.stack);
+        alwaysLog(error.stack);
         return false;
     }
 }
@@ -210,7 +210,7 @@ async function userAllowAccess(message) {
             return false;
         }
     } catch (error) {
-        log(error.stack);
+        alwaysLog(error.stack);
         return false;
     }
 }
@@ -259,7 +259,7 @@ async function setSessionKey(user) {
             return false;
         }
     } catch (error) {
-        log(error.stack);
+        alwaysLog(error.stack);
         return false;
     }
 }
@@ -272,80 +272,13 @@ async function getSessionKey(user) {
         log(JSON.stringify(userInfo));
         return userInfo["sessionKey"];
     } catch (error) {
-        log(error.stack);
+        alwaysLog(error.stack);
         return false;
     }
-}
-
-
-async function runlastFMScript(user, userToListen) {
-    try{
-        log("Running lastFM script");
-        let sessionKey = await getSessionKey(user);
-        log(`Session key for user ${user.username}: ${sessionKey}`);
-        let options = {
-            mode: 'text',
-            pythonOptions: ['-u'], // get print results in real-time
-            scriptPath: './scripts', //If you are having python_test.py script in same folder, then it's optional.
-            args: [sessionKey, userToListen]
-        };
-        PythonShell.run('lfmds.py', options, function (err, result){
-            if (err) throw err;
-            // result is an array consisting of messages collected
-            //during execution of script.
-            log('result: ', result);
-        });
-        /*
-        let aChild = { "id": user.id, "shell" : new PythonShell() };
-        aChild["shell"].run('lfmds.py', options);
-        children.push(aChild);
-        */
-        return
-    } catch (error) {
-        log(error.stack);
-        return false;
-    }
-}
-
-
-async function startDuoScrobble(user, userToListen) {
-    try{
-        log("Running lastFM script");
-        let sessionKey = await getSessionKey(user);
-        log(`Session key for user ${user.username}: ${sessionKey}`);
-    } catch (error) {
-        log(error.stack);
-        log("Could not get session key");
-        return false;
-    }
-    if(children.length == 0) {
-        //var result = runlastFMScript(user, userToListen);
-        var script = spawn('python3', ['./scripts/lfmds.py', user.id, userToListen]);
-        
-        script.on('close', (code) => {
-            log(`child process exited with code ${code}`);
-        });
-        child = { "id": user.id, "childProcess" : script };
-        children.push(child);
-    } else {
-        // Do nothing here??? Why create new child process if one already exists?
-        for (let i = 0; i < children.length; i++) {
-            if (children[i]["id"] == user.id) {
-                if(children[i]["childProcess"].exitCode == null) {
-                    // terminate child process
-                    children[i]["childProcess"].kill();
-                    log("Terminated child of user " + user.username);
-                    removeAtWithSplice(children, i);
-                    break;
-                }
-            }
-        }
-        var result = runlastFMScript(user, userToListen);
-    }
-    return result;
 }
 
 function log(message) {
+    if(!DEBUGGING) return;
     var toSave = `[${new Date().toLocaleString()}] ${message}`;
     console.log(toSave);
     try {
@@ -357,7 +290,20 @@ function log(message) {
       log("Error writing to log file");
     }
   }
-module.exports = { checkUser, registerUser, hasSessionKey, setSessionKey, connect, close, userAllowAccess, startDuoScrobble, getSessionKey };
+
+    function alwaysLog(message) {
+    var toSave = `[${new Date().toLocaleString()}] ${message}`;
+    console.log(toSave);
+    try {
+        fs.appendFile("./log/databaseLog.log", toSave + "\n", (err) => {
+        if(err) log(`ERROR: currently inside callback: ${err}`);
+        });
+    } catch (error) {
+        console.error(error);
+        alwaysLog("Error writing to log file");
+    }
+}
+module.exports = { checkUser, registerUser, hasSessionKey, setSessionKey, connect, close, userAllowAccess, getSessionKey };
 
 
   

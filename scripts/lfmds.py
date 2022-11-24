@@ -11,6 +11,8 @@
 #       for user to press enter                                                 #
 # TODO: Write code to translate Last.fm API error codes to human readable       #
 #       error messages                                                          #
+# TODO: Maybe write failsafe for when user hasnt listened to anything in the    #
+#       last 5 minutes, quit program                                            #
 #                                                                               #
 #################################################################################
 
@@ -65,6 +67,29 @@ def updateNowPlaying(songName, artistName, album, sessionKey):
     except Exception as e:
         log(e)
     
+def getLastTwoTracks(respContent):
+    # Get the last two tracks
+    tracks = respContent["recenttracks"]["track"]
+    if len(tracks) == 1:
+        log("Only one track in list")
+        return tracks[0], None
+    else:
+        log("Two tracks in list")
+        # Return the last two tracks as objects
+        # with the following attributes:
+        #   name
+        #   artist
+        #   album
+        
+        return [{
+            "name": tracks[0]["name"],
+            "artist": tracks[0]["artist"]["#text"],
+            "album": tracks[0]["album"]["#text"]
+        }, {
+            "name": tracks[1]["name"],
+            "artist": tracks[1]["artist"]["#text"],
+            "album": tracks[1]["album"]["#text"]
+        }]
 
 def main():
 
@@ -80,6 +105,7 @@ def main():
         "timestamp" : ""
     }
 
+    log("Getting recent tracks first time")
     resp = requests.get(GET_RECENT_TRACKS_URL)
     respCode = resp.status_code
 
@@ -94,7 +120,11 @@ def main():
     except Exception as e:
         log(e)
 
-    log(respContent)
+    log("Getting last two tracks")
+    lastTwoTracks = getLastTwoTracks(respContent)
+    log("Last two tracks: \n")
+    log(lastTwoTracks)
+
 
     latestTrackOnLastFm = respContent["recenttracks"]["track"][0] 
     try:
@@ -123,6 +153,8 @@ def main():
     # Bad code i know
     counter = 0
     while True:
+
+        log("Getting recent tracks inside while loop")
         resp = requests.get(GET_RECENT_TRACKS_URL)
         respCode = resp.status_code
 
@@ -130,7 +162,7 @@ def main():
         if respCode != 200:
             log("Bad response")
             log(resp.json())
-            logger.critical("Bad response from get recent tracks")
+            #logger.critical("Bad response from get recent tracks")
             time.sleep(10)
             continue
         # Logging for debugging purposes
@@ -139,6 +171,11 @@ def main():
             respContent = resp.json()
         except Exception as e:
             log(e)
+
+        log("Getting last two tracks")
+        lastTwoTracks = getLastTwoTracks(respContent)
+        log("Last two tracks: \n")
+        log(lastTwoTracks)
 
         latestTrackOnLastFm = respContent["recenttracks"]["track"][0] 
         try:
@@ -162,17 +199,14 @@ def main():
             "timestamp" : ""
         }
 
-        log("Track 0")
-        log(respContent["recenttracks"]["track"][0])
-        log("Track 1")
-        log(respContent["recenttracks"]["track"][1])
-
         log("Currently playing on program")
         log(currentlyPlayingProgram)
         log("Last played song on program")
         log(lastPlayedSongProgram)
 
         if isPlaying == "true":
+            # Could perhaps set objects to equal each other instead of setting each value
+            # Does surely its a copy and not a reference
             currentlyPlayingOnLastFm["name"] = latestTrackOnLastFm["name"]
             currentlyPlayingOnLastFm["artist"] = latestTrackOnLastFm["artist"]["#text"]
             currentlyPlayingOnLastFm["album"] = latestTrackOnLastFm["album"]["#text"]
@@ -182,16 +216,26 @@ def main():
             lastPlayedSongOnLastFm["timestamp"] = respContent["recenttracks"]["track"][1]["date"]["uts"]
             # Ignore following comment for now
             # Commenting this out, if it works, can probably remove currentlyPlayingObjects
+            log("Checking if currently playing is not equal to last played")
+            log("if it is, then we have update the now playing")
+
+            log("Is currently playing equal to last played?")
+            log("" + str(currentlyPlayingProgram) + " == " + str(currentlyPlayingOnLastFm))
+            log("or counter is >= 30 : " + str(counter))
             if currentlyPlayingProgram["name"] != currentlyPlayingOnLastFm["name"] or counter >= 30: #temporary >:(
+                log("They were not equal")
+                log("Updating now playing")
                 updateNowPlaying(currentlyPlayingOnLastFm["name"], currentlyPlayingOnLastFm["artist"], currentlyPlayingOnLastFm["album"], sessionKey)
                 currentlyPlayingProgram = currentlyPlayingOnLastFm
                 counter = 0
-                logger.info("Updated now playing")
+                #logger.info("Updated now playing")
         else:
             lastPlayedSongOnLastFm["name"] = latestTrackOnLastFm["name"]
             lastPlayedSongOnLastFm["artist"] = latestTrackOnLastFm["artist"]["#text"]
             lastPlayedSongOnLastFm["album"] = latestTrackOnLastFm["album"]["#text"]
             lastPlayedSongOnLastFm["timestamp"] = latestTrackOnLastFm["date"]["uts"]
+            #log("Is not playing, updating now playing anyway")
+            #updateNowPlaying()
 
         if lastPlayedSongProgram != lastPlayedSongOnLastFm:
             if lastPlayedSongProgram["timestamp"] != lastPlayedSongOnLastFm["timestamp"]:
@@ -200,7 +244,6 @@ def main():
 
         time.sleep(1)
         counter += 1
-
 
 
 main()

@@ -1,4 +1,3 @@
-
 // PACKAGES
 const fs = require('fs');
 const fetch = require('node-fetch');
@@ -23,6 +22,7 @@ const { sendBoop, boop } = require('./welcomeMessage');
 const { checkUser, registerUser, connect, close, userAllowAccess, setSessionKey, getSessionKey} = require('./userHandler.js');
 const { getRecentTracks, scrobbleSong, updateNowPlaying } = require('./lastfm.js');
 
+const DEBUGGING = false;
 
 let timer = 0;
 
@@ -41,21 +41,20 @@ var scrobblers = [];
 client.once('ready', async () => {
   await connect();
   fs.writeFile('./log/log.log', 'Bot started!\n', (err) => { if(err) console.log('error', err);});
-  log(`Bot is ready!`);
+  alwaysLog(`Bot is ready!`);
   setInterval( () => {
     if(timer > 0){
-      timer -= 1000 * 60;
-      console.log(`Timer: ${timer}`);
+      timer -= 1000;
     } else {
       log("Timer has expired!");
       //var channel = client.channels.cache.get("959114050275524728");
-      updateScrobbles();
+      updateScrobblers();
 
 
       //channel.send({embeds: [getNextScheduleEvent()]});
       timer = 1000 * 10;
     }
-  }, 1000 * 60);
+  }, 1000);
 
 });
 client.once('reconnecting', () => {
@@ -100,7 +99,7 @@ function handleMessage(message, serverQueue){
   // TODO: Redo this please
   // Perhaps a for-loop, just looping through commands?
   // But how to call correct function?
-  log(`Will try to handle ${message.content}`);
+  alwaysLog(`Will try to handle ${message.content}`);
   // !play
   if (message.content.startsWith(`${prefix}play`)) {
       execute(message, serverQueue);
@@ -140,12 +139,22 @@ function handleMessage(message, serverQueue){
      "**!skip** - to skip current song\n" +
      "**!stop** - to stop bot completely\n" + 
      "**!q** to get current queue\n" +
-     "**!clearQ** - to clear the queue\n" + 
+     "**!clearq** - to clear the queue\n" + 
      "**!remove** number - to remove specific song from queue\n" + 
+     "**!lfmhelp** - to get help with last.fm commands and setup\n" +
      "**!credits**");
-  } 
-  // !clearQ
-  else if(message.content.startsWith(`${prefix}clearQ`)){
+  }
+  // !lfmhelp
+  else if(message.content.startsWith(`${prefix}lfmhelp`)){
+      message.channel.send("Setup:\n1. **!register** - to register your discord on this bots database.\nThe bot only saves your username and id from your discord account.\n" +
+      "2. **!allowaccess** - to allow the bot to scrobble your songs. Follow the link provided and accept before next step\n" +
+      "3. **!setuplastfm** - to setup your lastfm account with the bot.\n" +
+      "After setup you can use the following commands:\n" +
+      "**!duescrobble \"lastFmUser\"** to scrobble songs from that user to your account\n" +
+      "**!scrobblestop** to stop scrobbling songs from that user to your account\n");
+      }
+  // !clearq
+  else if(message.content.startsWith(`${prefix}clearq`)){
       clearQueue(serverQueue);
   } 
   // !remove
@@ -172,8 +181,8 @@ function handleMessage(message, serverQueue){
   else if(message.content.startsWith(`${prefix}allowaccess`)){
       allowAccess(message);
   }
-  // !setupLastFM
-  else if(message.content.startsWith(`${prefix}setupLastFM`)){
+  // !setuplastfm
+  else if(message.content.startsWith(`${prefix}setuplastfm`)){
       setupLastFM(message);
   }
   // !duoscrobble
@@ -189,17 +198,6 @@ function handleMessage(message, serverQueue){
   else if(message.content.startsWith(`${prefix}kachow`)){
       message.channel.send("https://tenor.com/view/kachow-cars-insane-kachow-gif-20913646");
   }
-  // !childrenkill
-  else if(message.content.startsWith(`${prefix}childrenkill`)){
-    if(message.author.id == "70999889231753216"){
-      killAllChildren();
-      log("Killed all children");
-      message.channel.send("Killed all children");
-
-    } else {
-      message.channel.send("You don't have permission to do that!<:pepeLaugh2:852905715676872765>");
-    }
-  }
   else {
       message.channel.send("You need to enter a valid command!");
   }
@@ -207,33 +205,55 @@ function handleMessage(message, serverQueue){
 
 async function updateScrobblers(){
   for (var i = 0; i < scrobblers.length; i++){
+    if(scrobblers[i].remove){
+      scrobblers.splice(i, 1);
+      if (scrobblers.length == 0){
+        alwaysLog("No more scrobblers, stopping interval");
+        break;
+      }
+      i--;
+    }
+    log(`Current user: ${JSON.stringify(scrobblers[i])}`);
     var userToListen = scrobblers[i]["userToListen"];
     var sessionKey = scrobblers[i]["sessionKey"];
     var userLastScrobbled = scrobblers[i]["lastScrobbledTrack"];
 
-    var recentTracks = getRecentTracks(userToListen, 3, 1);
-    log('Recent tracks: ' + recentTracks + ' for user ' + scrobblers[i]["user"].username);
-
+    var recentTracks = await getRecentTracks(userToListen, 3, 1);
+    log("\nJSON INCOMING\n\n\n")
+    log('Recent tracks: ' + JSON.stringify(recentTracks) + ' for user ' + scrobblers[i]["user"].username);
+    log("\nJSON DONE\n\n\n")
     if(recentTracks == null){
       log("Recent tracks is null");
       continue;
     }
-
-    var mostRecentTrack = recentTracks["recenttracks"]["track"][0] 
+    var mostRecentTrack = recentTracks["recenttracks"]["track"][0];
     var isPlaying = mostRecentTrack["@attr"] != null && mostRecentTrack["@attr"]["nowplaying"] == "true";
     var secondMostRecentTrack = recentTracks["recenttracks"]["track"][1]
+
+    log("\nJSON INCOMING\n\n\n")
+    log('Most recent track: ' + JSON.stringify(mostRecentTrack));
+    log("\nJSON DONE\n\n\n")
+
+    log("\nJSON INCOMING\n\n\n")
+    log("Second most recent track: " + JSON.stringify(secondMostRecentTrack));
+    log("\nJSON DONE\n\n\n")
 
     if(isPlaying){
       log("User is playing");
       var trackName = mostRecentTrack["name"];
       var artistName = mostRecentTrack["artist"]["#text"];
       var albumName = mostRecentTrack["album"]["#text"];
-      var trackStartTime = mostRecentTrack["date"]["uts"];
 
-      updateNowPlaying(trackName, artistName, albumName, trackStartTime, sessionKey);
+      var result = await updateNowPlaying(trackName, artistName, albumName, sessionKey);
+      if (result["message"] != null && result["message"].startsWith("Invalid session key")){
+        scrobblers[i]["user"].send("Your session key is invalid, please re-register your LastFM account with the bot");
+        scrobblers[i].remove = true;
+        // TODO: remove scrobbler from array
+        continue;
+      }
       log("Updated now playing for user " + scrobblers[i]["user"].username);
       var resultScrobble = tryScrobble(secondMostRecentTrack, userLastScrobbled, sessionKey, scrobblers[i]["user"].username);
-      if(resultScrobble){
+      if(resultScrobble || userLastScrobbled == null){
         scrobblers[i]["lastScrobbledTrack"] = secondMostRecentTrack;
       } else continue;
     } else {
@@ -258,6 +278,9 @@ function tryScrobble(secondMostRecentTrack, userLastScrobbled, sessionKey, usern
 }
 
 function isSameScrobble(track1, track2){
+  var isNull1 = track1 == null;
+  var isNull2 = track2 == null;
+  if (isNull1 || isNull2) return false;
   var isSameName = track1["name"] == track2["name"];
   var isSameArtist = track1["artist"]["#text"] == track2["artist"]["#text"];
   var isSameAlbum = track1["album"]["#text"] == track2["album"]["#text"];
@@ -266,7 +289,7 @@ function isSameScrobble(track1, track2){
 }
 
 async function stopscrobbling(message){
-  log(`Will try to stop scrobbling for ${message.author.username}`);
+  alwaysLog(`Will try to stop scrobbling for ${message.author.username}`);
   await message.channel.send("Will try to stop scrobbling for you!");
   for (let i = 0; i < scrobblers.length; i++) {
     if(scrobblers[i]["_id"] == message.author.id){
@@ -290,10 +313,14 @@ async function duoscrobble(message){
       "user": message.author,
       "userToListen": userToListen,
       "lastScrobbledTrack": null,
-      "sessionKey": getSessionKey(message.author)
+      "sessionKey": await getSessionKey(message.author),
+      "isFirstScrobble": true,
+      "_id": message.author.id,
+      "remove": false
   }
   scrobblers.push(newScrobbler);
-  let timer = 0;
+  timer = 0;
+  await message.channel.send(`Will try to scrobble ${userToListen}'s songs for ${message.author.username}`);
 }
   
 
@@ -337,7 +364,7 @@ async function register(message){
 }
 
 async function exit(message){
-  log("Exiting...");
+  alwaysLog("Exiting...");
   await close();
   await message.channel.send("You killed me! <:Sadge:852903092315357204>");
   client.destroy();
@@ -345,7 +372,7 @@ async function exit(message){
 }
 
 function removeFromQueue(message, serverQueue){
-  log(`Will try to remove ${message.content}`);
+  alwaysLog(`Will try to remove ${message.content}`);
   const args = message.content.split(" ");
 
   const voiceChannel = message.member.voice.channel;
@@ -378,7 +405,7 @@ function removeFromQueue(message, serverQueue){
 }
 
 function clearQueue(serverQueue){
-  log("Clearing queue");
+  alwaysLog("Clearing queue");
   if(serverQueue != undefined){
     serverQueue.songs = [];
     serverQueue.textChannel.send("Queue has been cleared!");
@@ -386,7 +413,7 @@ function clearQueue(serverQueue){
 }
 
 function printQueue(message, serverQueue){
-  log("Printing queue");
+  alwaysLog("Printing queue");
   if(serverQueue != undefined){
     let songString = "";
     let counter = 1;
@@ -404,7 +431,7 @@ function printQueue(message, serverQueue){
 }
 
 async function execute(message, serverQueue) {
-  log(`Will try to execute ${message.content}`);
+  alwaysLog(`Will try to execute ${message.content}`);
   const args = message.content.split(" ");
   
   const voiceChannel = message.member.voice.channel;
@@ -471,7 +498,7 @@ async function execute(message, serverQueue) {
 }
 
 async function skip(message, serverQueue) {
-  log("skipping");
+  alwaysLog("skipping");
     if (!message.member.voice.channel)
       return message.channel.send(
         "You have to be in a voice channel to stop the music!"
@@ -491,7 +518,7 @@ async function skip(message, serverQueue) {
 }
   
 function stop(message, serverQueue) {
-  log("Stopping music");
+  alwaysLog("Stopping music");
   if (!message.member.voice.channel)
     return message.channel.send(
       "You have to be in a voice channel to stop the music!"
@@ -506,7 +533,7 @@ function stop(message, serverQueue) {
 }
 
 async function play(guild, song, connection) {
-  log(`Starting to play ${song.title}`);
+  alwaysLog(`Starting to play ${song.title}`);
   const serverQueue = queue.get(guild.id);
   if (!song) {
     serverQueue.voiceChannel.leave();
@@ -570,6 +597,19 @@ async function getVideoUrl(searchValue){
 }
 
 function log(message) {
+  if (!DEBUGGING) return;
+  var toSave = `[${new Date().toLocaleString()}] ${message}`;
+  console.log(toSave);
+  try {
+    fs.appendFile("./log/log.log", toSave + "\n", (err) => {
+      if(err) log(`ERROR: currently inside callback: ${err}`);
+     });
+  } catch (error) {
+    console.error(error);
+    log("Error writing to log file");
+  }
+}
+function alwaysLog(message) {
   var toSave = `[${new Date().toLocaleString()}] ${message}`;
   console.log(toSave);
   try {
@@ -584,4 +624,4 @@ function log(message) {
 
 client.login(token);
 
-module.exports = { log };
+module.exports = { log, alwaysLog, DEBUGGING };
