@@ -18,7 +18,6 @@ const { PythonShell } =require('python-shell');
 var fs = require('fs');
 const { spawn } = require('node:child_process');
 
-children = [];
 
 async function connect() {
     try {
@@ -164,6 +163,7 @@ async function getToken(user) {
     }
 }
 
+
 async function runLinkScript(){
     let options = {
         mode: 'text',
@@ -277,6 +277,7 @@ async function getSessionKey(user) {
     }
 }
 
+
 async function runlastFMScript(user, userToListen) {
     try{
         log("Running lastFM script");
@@ -305,6 +306,7 @@ async function runlastFMScript(user, userToListen) {
         return false;
     }
 }
+
 
 async function startDuoScrobble(user, userToListen) {
     try{
@@ -342,65 +344,6 @@ async function startDuoScrobble(user, userToListen) {
     }
     return result;
 }
-async function stopDuoScrobble(user) {
-    if(children.length == 0) {
-        log("No children to kill");
-        return;
-    } else {
-        await killChild(user)
-    }
-    
-}
-
-async function killChild(user){
-    log("Attempting to kill child");
-    for (let i = 0; i < children.length; i++) {
-        if (children[i]["id"] == user.id) {
-            if(children[i]["childProcess"].errorCode == null) {
-
-                const { success, err = '', results } = await new Promise( (resolve, reject) => {
-                    // result is an array consisting of messages collected
-                    //during execution of script.
-                    try {
-                        children[i]["childProcess"].kill();
-                        result = children[i]["childProcess"].errorCode;
-                        resolve({ success: true, results: result });
-                    } catch (error) {
-                        log(error.stack);
-                        log("Could not kill child");
-                        reject({ success: false, error });
-                    }
-                });
-                removeAtWithSplice(children,i);
-                log("Killed child of user " + user.username);
-                log(`Results: \nSuccess? ${success} \n Error: ${err} \n Results: ${results}`);
-                return success;
-            } 
-        } else if(children[i]["childProcess"].errorCode != null) {
-            log("Child of user with id " + children[i]["id"] + " was found dead");
-            log("Removing child from list");
-            removeAtWithSplice(children,i);
-            i = 0;
-            continue;
-        }
-    }
-}
-
-async function killAllChildren() {
-    for (let i = 0; i < children.length; i++) {
-        if(children[i]["childProcess"].errorCode == null) {
-            children[i]["childProcess"].kill();
-            log("Killed child of user with id " + children[i]["id"]);
-        }
-    }
-    children = [];
-}
-
-function removeAtWithSplice(array, index) {
-    const copy = [...array];
-    copy.splice(index, 1);
-    return copy;
-  }
 
 function log(message) {
     var toSave = `[${new Date().toLocaleString()}] ${message}`;
@@ -414,7 +357,7 @@ function log(message) {
       log("Error writing to log file");
     }
   }
-module.exports = { checkUser, registerUser, hasSessionKey, setSessionKey, connect, close, userAllowAccess, startDuoScrobble, stopDuoScrobble, killAllChildren };
+module.exports = { checkUser, registerUser, hasSessionKey, setSessionKey, connect, close, userAllowAccess, startDuoScrobble, getSessionKey };
 
 
   

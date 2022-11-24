@@ -20,9 +20,9 @@ const {
 // IMPORTED FUNCTIONS
 const { getNextScheduleEvent, getNextTime } = require('./scheduleMessage');
 const { sendBoop, boop } = require('./welcomeMessage');
-const { send } = require('process');
-const { checkUser, registerUser, connect, close, userAllowAccess, setSessionKey, startDuoScrobble, stopDuoScrobble, killAllChildren} = require('./userHandler.js');
-const { start } = require('repl');
+const { checkUser, registerUser, connect, close, userAllowAccess, setSessionKey, getSessionKey} = require('./userHandler.js');
+const { getRecentTracks, scrobbleSong, updateNowPlaying } = require('./lastfm.js');
+
 
 let timer = 0;
 
@@ -36,6 +36,7 @@ for(const file of commandFiles) {
 }
 
 const queue = new Map();
+var scrobblers = [];
 
 client.once('ready', async () => {
   await connect();
@@ -44,13 +45,15 @@ client.once('ready', async () => {
   setInterval( () => {
     if(timer > 0){
       timer -= 1000 * 60;
-      //console.log(`Timer: ${timer}`);
+      console.log(`Timer: ${timer}`);
     } else {
-      //console.log("Timer has expired!");
+      log("Timer has expired!");
       //var channel = client.channels.cache.get("959114050275524728");
-      
+      updateScrobbles();
+
+
       //channel.send({embeds: [getNextScheduleEvent()]});
-      //timer = getNextTime(channel);
+      timer = 1000 * 10;
     }
   }, 1000 * 60);
 
@@ -175,7 +178,7 @@ function handleMessage(message, serverQueue){
   }
   // !duoscrobble
   else if(message.content.startsWith(`${prefix}duoscrobble`)){
-      duoscrobble(message);
+    duoscrobble(message);
   }
   // !scrobblestop
   else if(message.content.startsWith(`${prefix}scrobblestop`)){
@@ -201,10 +204,78 @@ function handleMessage(message, serverQueue){
       message.channel.send("You need to enter a valid command!");
   }
 }
+
+async function updateScrobblers(){
+  for (var i = 0; i < scrobblers.length; i++){
+    var userToListen = scrobblers[i]["userToListen"];
+    var sessionKey = scrobblers[i]["sessionKey"];
+    var userLastScrobbled = scrobblers[i]["lastScrobbledTrack"];
+
+    var recentTracks = getRecentTracks(userToListen, 3, 1);
+    log('Recent tracks: ' + recentTracks + ' for user ' + scrobblers[i]["user"].username);
+
+    if(recentTracks == null){
+      log("Recent tracks is null");
+      continue;
+    }
+
+    var mostRecentTrack = recentTracks["recenttracks"]["track"][0] 
+    var isPlaying = mostRecentTrack["@attr"] != null && mostRecentTrack["@attr"]["nowplaying"] == "true";
+    var secondMostRecentTrack = recentTracks["recenttracks"]["track"][1]
+
+    if(isPlaying){
+      log("User is playing");
+      var trackName = mostRecentTrack["name"];
+      var artistName = mostRecentTrack["artist"]["#text"];
+      var albumName = mostRecentTrack["album"]["#text"];
+      var trackStartTime = mostRecentTrack["date"]["uts"];
+
+      updateNowPlaying(trackName, artistName, albumName, trackStartTime, sessionKey);
+      log("Updated now playing for user " + scrobblers[i]["user"].username);
+      var resultScrobble = tryScrobble(secondMostRecentTrack, userLastScrobbled, sessionKey, scrobblers[i]["user"].username);
+      if(resultScrobble){
+        scrobblers[i]["lastScrobbledTrack"] = secondMostRecentTrack;
+      } else continue;
+    } else {
+      var resultScrobble = tryScrobble(secondMostRecentTrack, userLastScrobbled, sessionKey, scrobblers[i]["user"].username);
+      if(resultScrobble){
+        scrobblers[i]["lastScrobbledTrack"] = secondMostRecentTrack;
+      } else continue; 
+    }
+  }
+}
+
+function tryScrobble(secondMostRecentTrack, userLastScrobbled, sessionKey, username){
+  if(isSameScrobble(secondMostRecentTrack, userLastScrobbled)){
+    log("Same scrobble as last time");
+    return false;
+  } else {
+    log("Different scrobble than last time");
+    scrobbleSong(secondMostRecentTrack["name"], secondMostRecentTrack["artist"]["#text"], secondMostRecentTrack["album"]["#text"], secondMostRecentTrack["date"]["uts"], sessionKey);
+    log("Scrobbled track for user " + username);
+    return true;
+  }
+}
+
+function isSameScrobble(track1, track2){
+  var isSameName = track1["name"] == track2["name"];
+  var isSameArtist = track1["artist"]["#text"] == track2["artist"]["#text"];
+  var isSameAlbum = track1["album"]["#text"] == track2["album"]["#text"];
+  var isSameTime = track1["date"]["uts"] == track2["date"]["uts"];
+  return isSameName && isSameArtist && isSameAlbum && isSameTime;
+}
+
 async function stopscrobbling(message){
   log(`Will try to stop scrobbling for ${message.author.username}`);
   await message.channel.send("Will try to stop scrobbling for you!");
-  stopDuoScrobble(message.author)
+  for (let i = 0; i < scrobblers.length; i++) {
+    if(scrobblers[i]["_id"] == message.author.id){
+      scrobblers.splice(i, 1);
+      log(`Removed ${message.author.username} from scrobblers`);
+      await message.channel.send(`Stopped scrobbling for user ${message.author.username}`);
+      return;
+    }
+  }
 }
 
 async function duoscrobble(message){
@@ -215,11 +286,14 @@ async function duoscrobble(message){
   }
   var userToListen = args[1];
   log(`Will try to scrobble ${userToListen}'s songs for ${message.author.username}`);
-  await message.channel.send(`Will try to scrobble ${userToListen}'s songs for ${message.author.username}`);
-  var result = startDuoScrobble(message.author, userToListen);
-  if(result == false){
-      await message.channel.send("Something went wrong!\nHave you registered you LastFM account?");
+  var newScrobbler = {
+      "user": message.author,
+      "userToListen": userToListen,
+      "lastScrobbledTrack": null,
+      "sessionKey": getSessionKey(message.author)
   }
+  scrobblers.push(newScrobbler);
+  let timer = 0;
 }
   
 
