@@ -226,9 +226,15 @@ async function updateScrobblers(){
       log("Recent tracks is null");
       continue;
     }
-    var mostRecentTrack = recentTracks["recenttracks"]["track"][0];
-    var isPlaying = mostRecentTrack["@attr"] != null && mostRecentTrack["@attr"]["nowplaying"] == "true";
-    var secondMostRecentTrack = recentTracks["recenttracks"]["track"][1]
+    try{
+      var mostRecentTrack = recentTracks["recenttracks"]["track"][0];
+      var isPlaying = mostRecentTrack["@attr"] != null && mostRecentTrack["@attr"]["nowplaying"] == "true";
+      var secondMostRecentTrack = recentTracks["recenttracks"]["track"][1]
+    } catch(err){
+      alwaysLog("Error: " + err);
+      continue;
+    }
+    
 
     log("\nJSON INCOMING\n\n\n")
     log('Most recent track: ' + JSON.stringify(mostRecentTrack));
@@ -238,29 +244,34 @@ async function updateScrobblers(){
     log("Second most recent track: " + JSON.stringify(secondMostRecentTrack));
     log("\nJSON DONE\n\n\n")
 
-    if(isPlaying){
-      log("User is playing");
-      var trackName = mostRecentTrack["name"];
-      var artistName = mostRecentTrack["artist"]["#text"];
-      var albumName = mostRecentTrack["album"]["#text"];
-
-      var result = await updateNowPlaying(trackName, artistName, albumName, sessionKey);
-      if (result["message"] != null && result["message"].startsWith("Invalid session key")){
-        scrobblers[i]["user"].send("Your session key is invalid, please re-register your LastFM account with the bot");
-        scrobblers[i].remove = true;
-        // TODO: remove scrobbler from array
-        continue;
+    try{
+      if(isPlaying){
+        log("User is playing");
+        var trackName = mostRecentTrack["name"];
+        var artistName = mostRecentTrack["artist"]["#text"];
+        var albumName = mostRecentTrack["album"]["#text"];
+  
+        var result = await updateNowPlaying(trackName, artistName, albumName, sessionKey);
+        if (result["message"] != null && result["message"].startsWith("Invalid session key")){
+          scrobblers[i]["user"].send("Your session key is invalid, please re-register your LastFM account with the bot");
+          scrobblers[i].remove = true;
+          // TODO: remove scrobbler from array
+          continue;
+        }
+        log("Updated now playing for user " + scrobblers[i]["user"].username);
+        var resultScrobble = tryScrobble(secondMostRecentTrack, userLastScrobbled, sessionKey, scrobblers[i]["user"].username);
+        if(resultScrobble || userLastScrobbled == null){
+          scrobblers[i]["lastScrobbledTrack"] = secondMostRecentTrack;
+        } else continue;
+      } else {
+        var resultScrobble = tryScrobble(secondMostRecentTrack, userLastScrobbled, sessionKey, scrobblers[i]["user"].username);
+        if(resultScrobble){
+          scrobblers[i]["lastScrobbledTrack"] = secondMostRecentTrack;
+        } else continue; 
       }
-      log("Updated now playing for user " + scrobblers[i]["user"].username);
-      var resultScrobble = tryScrobble(secondMostRecentTrack, userLastScrobbled, sessionKey, scrobblers[i]["user"].username);
-      if(resultScrobble || userLastScrobbled == null){
-        scrobblers[i]["lastScrobbledTrack"] = secondMostRecentTrack;
-      } else continue;
-    } else {
-      var resultScrobble = tryScrobble(secondMostRecentTrack, userLastScrobbled, sessionKey, scrobblers[i]["user"].username);
-      if(resultScrobble){
-        scrobblers[i]["lastScrobbledTrack"] = secondMostRecentTrack;
-      } else continue; 
+    } catch(err){
+      alwaysLog("Error: " + err);
+      continue;
     }
   }
 }
