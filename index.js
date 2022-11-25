@@ -281,9 +281,9 @@ function tryScrobble(secondMostRecentTrack, userLastScrobbled, sessionKey, usern
     log("Same scrobble as last time");
     return false;
   } else {
-    log("Different scrobble than last time");
+    alwaysLog("Different scrobble than last time");
     scrobbleSong(secondMostRecentTrack["name"], secondMostRecentTrack["artist"]["#text"], secondMostRecentTrack["album"]["#text"], secondMostRecentTrack["date"]["uts"], sessionKey);
-    log("Scrobbled track for user " + username);
+    alwaysLog("Scrobbled track for user " + username);
     return true;
   }
 }
@@ -305,7 +305,7 @@ async function stopscrobbling(message){
   for (let i = 0; i < scrobblers.length; i++) {
     if(scrobblers[i]["_id"] == message.author.id){
       scrobblers.splice(i, 1);
-      log(`Removed ${message.author.username} from scrobblers`);
+      alwaysLog(`Removed ${message.author.username} from scrobblers`);
       await message.channel.send(`Stopped scrobbling for user ${message.author.username}`);
       return;
     }
@@ -319,7 +319,7 @@ async function duoscrobble(message){
       return;
   }
   var userToListen = args[1];
-  log(`Will try to scrobble ${userToListen}'s songs for ${message.author.username}`);
+  alwaysLog(`Will try to scrobble ${userToListen}'s songs for ${message.author.username}`);
   var newScrobbler = {
       "user": message.author,
       "userToListen": userToListen,
@@ -362,14 +362,14 @@ async function register(message){
     await message.channel.send("User doesn't exist, will try registering!");
     var userRegistrationResult = await registerUser(message.author);
     if(userRegistrationResult == true){
-      log("User registered!");
+      alwaysLog("User registered!");
       await message.channel.send("User registered!");
     } else {
-      log("User registration failed!");
+      alwaysLog("User registration failed!");
       await message.channel.send("User registration failed!");
     }
   } else {
-    log("Error!");
+    alwaysLog("Error!");
     await message.channel.send("Error!");
   }
 }
