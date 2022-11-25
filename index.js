@@ -25,6 +25,7 @@ const { getRecentTracks, scrobbleSong, updateNowPlaying } = require('./lastfm.js
 const DEBUGGING = false;
 
 let timer = 0;
+let updateTimer = 0;
 
 client.commands = new Collection();
 
@@ -53,6 +54,20 @@ client.once('ready', async () => {
 
       //channel.send({embeds: [getNextScheduleEvent()]});
       timer = 1000 * 10;
+    }
+    if(updateTimer > 0){
+      updateTimer -= 1000;
+    }
+    else {
+      updateTimer = 1000 * 60 * 5;
+      if(scrobblers.length > 0){
+        alwaysLog("Current scrobblers: " + scrobblers.length);
+        for (let i = 0; i < scrobblers.length; i++) {
+          alwaysLog(scrobblers[i]["user"].username + " is scrobbling " + scrobblers[i]["userToListen"] + "'s songs");
+        }
+      } else {
+        alwaysLog("No scrobblers");
+      }
     }
   }, 1000);
 
