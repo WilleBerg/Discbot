@@ -61,10 +61,16 @@ client.once('ready', async () => {
     else {
       updateTimer = 1000 * 60 * 5;
       if(scrobblers.length > 0){
+        // Add these to function instead
+        alwaysLog("")
+        alwaysLog("UPDATE MESSAGE")
+        alwaysLog("")
         alwaysLog("Current scrobblers: " + scrobblers.length);
-        for (let i = 0; i < scrobblers.length; i++) {
-          alwaysLog(scrobblers[i]["user"].username + " is scrobbling " + scrobblers[i]["userToListen"] + "'s songs");
+        var message = createUpdateMessage(scrobblers);
+        for (let i = 0; i < message.length; i++) {
+          alwaysLog(message[i]);
         }
+        alwaysLog("");
       } else {
         alwaysLog("No scrobblers");
       }
@@ -72,6 +78,38 @@ client.once('ready', async () => {
   }, 1000);
 
 });
+
+function createUpdateMessage(scrobblers){
+  var space = " ";
+  var numberSign = "#";
+  var newLine = "\n";
+  var longestMessage = 0;
+  for (let i = 0; i < scrobblers.length; i++) {
+    var currentMessage = `${i+1}${space}${scrobblers[i]["user"].username}${space}is scrobbling${space}${scrobblers[i]["userToListen"]}'s songs. Time left: ${scrobblers[i]["timeout"] / 1000} seconds until timeout.`;
+    if(currentMessage.length > longestMessage){
+      longestMessage = currentMessage.length;
+    }
+  }
+  var numberSignRow = "#";
+  for (let i = 0; i < longestMessage + 4; i++) {
+    numberSignRow += numberSign;
+  }
+  //numberSignRow += numberSign;
+  var message = [numberSignRow];
+  for(let i = 0; i < scrobblers.length; i++){
+    var currentMessage = `${i+1}.${space}${scrobblers[i]["user"].username}${space}is scrobbling${space}${scrobblers[i]["userToListen"]}'s songs. Time left: ${scrobblers[i]["timeout"] / 1000} seconds until timeout.`;
+    var spaces = longestMessage - currentMessage.length;
+    //alwaysLog("Spaces: " + spaces + "for message: " + currentMessage);
+    for (let j = 0; j < spaces; j++) {
+      currentMessage += space;
+    }
+    if (spaces > 0) currentMessage += space;
+    message.push(numberSign + space + currentMessage + space + numberSign);
+  }
+  message.push(numberSignRow);
+  return message;
+}
+
 client.once('reconnecting', () => {
     console.log('Reconnecting!');
 });
@@ -228,6 +266,11 @@ async function updateScrobblers(){
       }
       i--;
     }
+    scrobblers[i].timeout -= 1000 * 10;
+    if (scrobblers[i].timeout <= 0){
+      scrobblers[i].remove = true;
+      alwaysLog(`Scrobbler ${scrobblers[i].username} timed out`);
+    }
     log(`Current user: ${JSON.stringify(scrobblers[i])}`);
     var userToListen = scrobblers[i]["userToListen"];
     var sessionKey = scrobblers[i]["sessionKey"];
@@ -342,7 +385,8 @@ async function duoscrobble(message){
       "sessionKey": await getSessionKey(message.author),
       "isFirstScrobble": true,
       "_id": message.author.id,
-      "remove": false
+      "remove": false,
+      "timeout" : 1000 * 60 * 60 * 5
   }
   scrobblers.push(newScrobbler);
   timer = 0;
