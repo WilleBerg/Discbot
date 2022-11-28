@@ -228,6 +228,7 @@ function handleMessage(message, serverQueue){
     if(message.author.id == "70999889231753216"){
       var message0 = createUpdateMessage(scrobblers);
       var message1 = "";
+      
       for(let i = 0; i < message0.length; i++){
         message1 += message0[i] + "\n";
       }
