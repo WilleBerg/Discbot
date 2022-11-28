@@ -80,6 +80,7 @@ client.once('ready', async () => {
 });
 
 function createUpdateMessage(scrobblers){
+  if(scrobblers.length == 0) return ["No scrobblers"];
   var space = " ";
   var numberSign = "#";
   var newLine = "\n";
@@ -222,6 +223,19 @@ function handleMessage(message, serverQueue){
       message.channel.send("You don't have permission to do that!<:pepeLaugh2:852905715676872765>");
     }
   } 
+  // !scrobblestatus
+  else if(message.content.startsWith(`${prefix}scrobblestatus`)){
+    if(message.author.id == "70999889231753216"){
+      var message0 = createUpdateMessage(scrobblers);
+      var message1 = "";
+      for(let i = 0; i < message0.length; i++){
+        message1 += message0[i] + "\n";
+      }
+      message.channel.send(message1);
+    } else {
+      message.channel.send("You don't have permission to do that!<:pepeLaugh2:852905715676872765>");
+    }
+  }
   // !boop
   else if(message.content.startsWith(`${prefix}boop`)){
       boop(message.channel);
