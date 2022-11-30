@@ -260,7 +260,25 @@ function handleMessage(message, serverQueue){
   // !scrobblestop
   else if(message.content.startsWith(`${prefix}scrobblestop`)){
       stopscrobbling(message);
+  }
+  // !ems
+  // NOT FINISHED
+  else if(message.content.startsWith(`${prefix}ems`)){
+    return;
+    if(message.author.id != "536906681570033664" || message.author.id != "70999889231753216") return;
+    var mess = message.content.split(" ");
+    var content = "";
+    if(mess.length != 1 || mess.length > 2){
+      content = "!duoscrobble sylt_-";
+    } else {
+      content = "!duoscrobble sylt_- " + mess[1];
     }
+    message1 = {
+      "author": { "id": "536906681570033664", "username": "emmy" },
+      "content": content
+    }
+    duoscrobble(message1);
+  }
   // !kachow
   // ty copilot
   else if(message.content.startsWith(`${prefix}kachow`)){
