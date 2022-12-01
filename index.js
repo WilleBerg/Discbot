@@ -374,7 +374,7 @@ function tryScrobble(secondMostRecentTrack, userLastScrobbled, sessionKey, usern
   } else {
     alwaysLog("Different scrobble than last time");
     scrobbleSong(secondMostRecentTrack["name"], secondMostRecentTrack["artist"]["#text"], secondMostRecentTrack["album"]["#text"], secondMostRecentTrack["date"]["uts"], sessionKey);
-    alwaysLog("Scrobbled track for user " + username);
+    alwaysLog("Scrobbled track" + secondMostRecentTrack["name"] + " for user " + username);
     return true;
   }
 }
