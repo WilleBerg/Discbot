@@ -274,7 +274,7 @@ function handleMessage(message, serverQueue){
     }
     var newMessage = {
       "author": { "id": "536906681570033664", "username": "emmy" },
-      "content": message.content,
+      "content": content,
       "channel": message.channel  
     };
     duoscrobble(newMessage);
