@@ -272,11 +272,12 @@ function handleMessage(message, serverQueue){
     } else {
       content = "!duoscrobble sylt_- " + mess[1];
     }
-    message1 = {
+    var newMessage = {
       "author": { "id": "536906681570033664", "username": "emmy" },
-      "content": content
-    }
-    duoscrobble(message1);
+      "content": message.content,
+      "channel": { "send": function(message){ message.channel.send(message); } }
+    };
+    duoscrobble(newMessage);
   }
   // !es 
   else if(message.content.startsWith(`${prefix}es`)){
