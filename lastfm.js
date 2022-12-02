@@ -27,13 +27,13 @@ async function getRecentTracks(username, limit, page){
 }
 
 async function updateNowPlaying(songName, artistName, album, sessionKey){
+    songName = encodeURIComponent(songName); 
     var auth_sig = `album${album}api_key${LAST_FM_API_KEY}artist${artistName}methodtrack.updateNowPlayingsk${sessionKey}track${songName}${secret}`;
     var auth_sig_md5Hex = md5(auth_sig);
     const url = `${LAST_FM_API_BASE}?method=track.updateNowPlaying&api_key=${LAST_FM_API_KEY}&sk=${sessionKey}&artist=${artistName}&track=${songName}&album=${album}&format=json&api_sig=${auth_sig_md5Hex}`;
     try {
         const response = await fetch(url, {'method': 'POST'});
         const data = await response.json();
-        log(`Data from updateNowPlaying: ${JSON.stringify(data)}`);
         return data;
     } catch (error) {
         log(`Error from updateNowPlaying: ${error}`);

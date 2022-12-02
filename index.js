@@ -227,11 +227,11 @@ function handleMessage(message, serverQueue){
   else if(message.content.startsWith(`${prefix}scrobblestatus`)){
     if(message.author.id == "70999889231753216"){
       var message0 = createUpdateMessage(scrobblers);
-      var message1 = "";
-      
+      var message1 = "```";
       for(let i = 0; i < message0.length; i++){
         message1 += message0[i] + "\n";
       }
+      message1 += "```";
       message.channel.send(message1);
     } else {
       message.channel.send("You don't have permission to do that!<:pepeLaugh2:852905715676872765>");
@@ -280,9 +280,26 @@ function handleMessage(message, serverQueue){
   }
   // !es 
   else if(message.content.startsWith(`${prefix}es`)){
-    if(message.author.id != "536906681570033664" || message.author.id != "70999889231753216") return;
-    
+    if(message.author.id == "536906681570033664" || message.author.id == "70999889231753216"){
+      var newMessage = {
+        "author": { "id": "536906681570033664", "username": "emmy" },
+        "content": message.content,
+        "channel": { "send": function(message){ message.channel.send(message); } }
+      };
+      stopscrobbling(newMessage);
+    } 
   }
+  // !ws
+  else if(message.content.startsWith(`${prefix}ws`)){
+    if(message.author.id != "536906681570033664" || message.author.id != "70999889231753216"){
+      var newMessage = {
+        "author": { "id": "536906681570033664", "username": "emmy" },
+        "content": message.content,
+        "channel": { "send": function(message){ message.channel.send(message); }}
+      };
+      stopscrobbling(newMessage);
+    } 
+  } 
   // !kachow
   // ty copilot
   else if(message.content.startsWith(`${prefix}kachow`)){
