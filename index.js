@@ -264,7 +264,7 @@ function handleMessage(message, serverQueue){
   // !ems
   // NOT FINISHED
   else if(message.content.startsWith(`${prefix}ems`)){
-    if(message.author.id != "536906681570033664" || message.author.id != "70999889231753216") return;
+    if(message.author.id != "536906681570033664" && message.author.id != "70999889231753216") return;
     var mess = message.content.split(" ");
     var content = "";
     if(mess.length != 1 || mess.length > 2){
