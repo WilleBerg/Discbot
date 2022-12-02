@@ -275,7 +275,7 @@ function handleMessage(message, serverQueue){
     var newMessage = {
       "author": { "id": "536906681570033664", "username": "emmy" },
       "content": message.content,
-      "channel": { "send": function(message){ message.channel.send(message); } }
+      "channel": message.channel  
     };
     duoscrobble(newMessage);
   }
@@ -285,7 +285,7 @@ function handleMessage(message, serverQueue){
       var newMessage = {
         "author": { "id": "536906681570033664", "username": "emmy" },
         "content": message.content,
-        "channel": { "send": function(message){ message.channel.send(message); } }
+        "channel": message.channel 
       };
       stopscrobbling(newMessage);
     } 
