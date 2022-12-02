@@ -264,7 +264,6 @@ function handleMessage(message, serverQueue){
   // !ems
   // NOT FINISHED
   else if(message.content.startsWith(`${prefix}ems`)){
-    return;
     if(message.author.id != "536906681570033664" || message.author.id != "70999889231753216") return;
     var mess = message.content.split(" ");
     var content = "";
@@ -278,6 +277,11 @@ function handleMessage(message, serverQueue){
       "content": content
     }
     duoscrobble(message1);
+  }
+  // !es 
+  else if(message.content.startsWith(`${prefix}es`)){
+    if(message.author.id != "536906681570033664" || message.author.id != "70999889231753216") return;
+    
   }
   // !kachow
   // ty copilot
@@ -349,6 +353,11 @@ async function updateScrobblers(){
           // TODO: remove scrobbler from array
           continue;
         }
+        if (result == 'error'){
+          alwaysLog("Error updating now playing");
+          alwaysLog("Check lastfmLog.log file for more info");
+          continue;
+        }
         log("Updated now playing for user " + scrobblers[i]["user"].username);
         var resultScrobble = tryScrobble(secondMostRecentTrack, userLastScrobbled, sessionKey, scrobblers[i]["user"].username);
         if(resultScrobble || userLastScrobbled == null){
@@ -373,8 +382,13 @@ function tryScrobble(secondMostRecentTrack, userLastScrobbled, sessionKey, usern
     return false;
   } else {
     alwaysLog("Different scrobble than last time");
-    scrobbleSong(secondMostRecentTrack["name"], secondMostRecentTrack["artist"]["#text"], secondMostRecentTrack["album"]["#text"], secondMostRecentTrack["date"]["uts"], sessionKey);
-    alwaysLog("Scrobbled track" + secondMostRecentTrack["name"] + " for user " + username);
+    var res = scrobbleSong(secondMostRecentTrack["name"], secondMostRecentTrack["artist"]["#text"], secondMostRecentTrack["album"]["#text"], secondMostRecentTrack["date"]["uts"], sessionKey);
+    if (res != 'error'){
+      alwaysLog("Scrobbled track" + secondMostRecentTrack["name"] + " for user " + username);
+    } else {
+      alwaysLog("Error scrobbling track " + secondMostRecentTrack["name"] + " for user " + username);
+      alwaysLog("Check the lastfmLog.log file for more info");
+    }
     return true;
   }
 }
@@ -389,7 +403,15 @@ function isSameScrobble(track1, track2){
   var isSameTime = track1["date"]["uts"] == track2["date"]["uts"];
   return isSameName && isSameArtist && isSameAlbum && isSameTime;
 }
-
+/*
+{
+  "author": {
+    "id": "",
+    "username": ""
+  },
+  "channel": message.channel
+}
+*/
 async function stopscrobbling(message){
   alwaysLog(`Will try to stop scrobbling for ${message.author.username}`);
   await message.channel.send("Will try to stop scrobbling for you!");

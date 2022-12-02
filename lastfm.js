@@ -5,16 +5,20 @@ const fs = require('fs');
 
 const LAST_FM_API_KEY = apiKey;
 const LAST_FM_API_BASE = 'http://ws.audioscrobbler.com/2.0/';
-const DEBUGGING = false;
+const DEBUGGING = true;
 
 async function scrobbleSong(songName, artistName, album, timestamp, sessionKey){
     var auth_sig = `album${album}api_key${LAST_FM_API_KEY}artist${artistName}methodtrack.scrobblesk${sessionKey}timestamp${timestamp}track${songName}${secret}`;
     var auth_sig_md5Hex = md5(auth_sig);
-    const url = `${LAST_FM_API_BASE}?method=track.scrobble&api_key=${LAST_FM_API_KEY}&sk=${sessionKey}&artist=${artistName}&track=${songName}&album=${album}&timestamp=${timestamp}&format=json&api_sig=${auth_sig_md5Hex}`;
-    const response = await fetch(url, {'method': 'POST'});
-    const data = await response.json();
-    log(`Data from scrobbleSong: ${JSON.stringify(data)}`);
-    return data;
+    try {
+        const url = `${LAST_FM_API_BASE}?method=track.scrobble&api_key=${LAST_FM_API_KEY}&sk=${sessionKey}&artist=${artistName}&track=${songName}&album=${album}&timestamp=${timestamp}&format=json&api_sig=${auth_sig_md5Hex}`;
+        const response = await fetch(url, {'method': 'POST'});
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        log(`Error from scrobbleSong: ${error}`);
+        return 'error';
+    }
 }
 
 async function getRecentTracks(username, limit, page){
@@ -33,7 +37,7 @@ async function updateNowPlaying(songName, artistName, album, sessionKey){
         return data;
     } catch (error) {
         log(`Error from updateNowPlaying: ${error}`);
-        return error;
+        return 'error';
     }
 }
 
