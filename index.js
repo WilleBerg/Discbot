@@ -294,7 +294,7 @@ function handleMessage(message, serverQueue){
   else if(message.content.startsWith(`${prefix}ws`)){
     if(message.author.id != "536906681570033664" || message.author.id != "70999889231753216"){
       var newMessage = {
-        "author": { "id": "536906681570033664", "username": "emmy" },
+        "author": { "id": "70999889231753216", "username": "sylt" },
         "content": message.content,
         "channel": { "send": function(message){ message.channel.send(message); }}
       };
