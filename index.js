@@ -279,7 +279,7 @@ function handleMessage(message, serverQueue){
     };
     duoscrobble(newMessage);
   }
-  // !ems
+  // !wbs
   // NOT FINISHED
   else if(message.content.startsWith(`${prefix}wbs`)){
     if(message.author.id != "536906681570033664" && message.author.id != "70999889231753216") return;
@@ -314,7 +314,7 @@ function handleMessage(message, serverQueue){
       var newMessage = {
         "author": { "id": "70999889231753216", "username": "sylt" },
         "content": message.content,
-        "channel": { "send": function(message){ message.channel.send(message); }}
+        "channel": message.channel 
       };
       stopscrobbling(newMessage);
     } 
