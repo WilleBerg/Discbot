@@ -279,6 +279,24 @@ function handleMessage(message, serverQueue){
     };
     duoscrobble(newMessage);
   }
+  // !ems
+  // NOT FINISHED
+  else if(message.content.startsWith(`${prefix}wbs`)){
+    if(message.author.id != "536906681570033664" && message.author.id != "70999889231753216") return;
+    var mess = message.content.split(" ");
+    var content = "";
+    if(mess.length != 1 || mess.length > 2){
+      content = "!duoscrobble teitan-";
+    } else {
+      content = "!duoscrobble teitan- " + mess[1];
+    }
+    var newMessage = {
+      "author": { "id": "70999889231753216", "username": "sylt" },
+      "content": content,
+      "channel": message.channel  
+    };
+    duoscrobble(newMessage);
+  }
   // !es 
   else if(message.content.startsWith(`${prefix}es`)){
     if(message.author.id == "536906681570033664" || message.author.id == "70999889231753216"){
