@@ -332,6 +332,10 @@ async function updateScrobblers(){
     var userLastScrobbled = scrobblers[i]["lastScrobbledTrack"];
 
     var recentTracks = await getRecentTracks(userToListen, 3, 1);
+    if (recentTracks == 'error') {
+      alwaysLog(`Error getting recent tracks for ${userToListen}, check lastfmLog.log for more info`);
+      continue;
+    }
     log("\nJSON INCOMING\n\n\n")
     log('Recent tracks: ' + JSON.stringify(recentTracks) + ' for user ' + scrobblers[i]["user"].username);
     log("\nJSON DONE\n\n\n")

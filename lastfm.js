@@ -25,8 +25,13 @@ async function scrobbleSong(songName, artistName, album, timestamp, sessionKey){
 }
 
 async function getRecentTracks(username, limit, page){
-    var url = `${LAST_FM_API_BASE}?method=user.getrecenttracks&user=${username}&api_key=${LAST_FM_API_KEY}&format=json&limit=${limit}&page=${page}`;
-    return await fetch(url).then(response => response.json());
+    try {
+        var url = `${LAST_FM_API_BASE}?method=user.getrecenttracks&user=${username}&api_key=${LAST_FM_API_KEY}&format=json&limit=${limit}&page=${page}`;
+        return await fetch(url).then(response => response.json());    
+    } catch (error) {
+        log(`Error from getRecentTracks: ${error}`);
+        return 'error';
+    }
 }
 
 async function updateNowPlaying(songName, artistName, album, sessionKey){
