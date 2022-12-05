@@ -424,7 +424,7 @@ function tryScrobble(secondMostRecentTrack, userLastScrobbled, sessionKey, usern
     alwaysLog("Different scrobble than last time");
     var res = scrobbleSong(secondMostRecentTrack["name"], secondMostRecentTrack["artist"]["#text"], secondMostRecentTrack["album"]["#text"], secondMostRecentTrack["date"]["uts"], sessionKey);
     if (res != 'error'){
-      alwaysLog("Scrobbled track" + secondMostRecentTrack["name"] + " for user " + username);
+      alwaysLog("Scrobbled track " + secondMostRecentTrack["name"] + " for user " + username);
     } else {
       alwaysLog("Error scrobbling track " + secondMostRecentTrack["name"] + " for user " + username);
       alwaysLog("Check the lastfmLog.log file for more info");
