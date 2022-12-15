@@ -22,7 +22,7 @@ const { sendBoop, boop } = require('./welcomeMessage');
 const { checkUser, registerUser, connect, close, userAllowAccess, setSessionKey, getSessionKey} = require('./userHandler.js');
 const { getRecentTracks, scrobbleSong, updateNowPlaying, scrobbleSongs } = require('./lastfm.js');
 
-const DEBUGGING = true;
+const DEBUGGING = false;
 
 let timer = 0;
 let updateTimer = 0;

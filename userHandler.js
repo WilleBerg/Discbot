@@ -17,7 +17,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 const { PythonShell } =require('python-shell');
 var fs = require('fs');
 const { spawn } = require('node:child_process');
-const DEBUGGING = true;
+const DEBUGGING = false;
 
 async function connect() {
     try {
