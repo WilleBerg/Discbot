@@ -51,6 +51,32 @@ async function updateNowPlaying(songName, artistName, album, sessionKey){
     }
 }
 
+async function scrobbleSongs(songs, sessionKey){
+
+    var scrobbleList = [];
+    for (let index = 0; index < songs.length; index++) {
+        const song = songs[index];
+        var scrobble = {
+            "artist": song.artistName,
+            "track": song.songName,
+            "album": song.album,
+            "timestamp": song.timestamp
+        };
+        scrobbleList.push(scrobble);
+    }
+    var auth_sig = `api_key${LAST_FM_API_KEY}methodtrack.scrobblesk${sessionKey}${JSON.stringify(scrobbleList)}${secret}`;
+    var auth_sig_md5Hex = md5(auth_sig);
+    try {
+        const url = `${LAST_FM_API_BASE}?method=track.scrobble&api_key=${LAST_FM_API_KEY}&sk=${sessionKey}&format=json&api_sig=${auth_sig_md5Hex}`;
+        const response = await fetch(url, {'method': 'POST', 'body': JSON.stringify(scrobbleList)});
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        log(`Error from scrobbleSongs: ${error}`);
+        return 'error';
+    }
+}
+
 function log(message){
     if(!DEBUGGING) return;
     var toSave = `[${new Date().toLocaleString()}] ${message}`;
@@ -65,5 +91,66 @@ function log(message){
     }
 }
 
-module.exports = {scrobbleSong, getRecentTracks, updateNowPlaying};
+
+function convertErrorCode(errorCode){
+    switch(errorCode){
+        case 2:
+            return "Invalid service - This service does not exist";
+        case 3:
+            return "Invalid Method - No method with that name in this package";
+        case 4:
+            return "Authentication Failed - You do not have permissions to access the service";
+        case 5:
+            return "Invalid format - This service doesn't exist in that format";
+        case 6:
+            return "Invalid parameters - Your request is missing a required parameter";
+        case 7:
+            return "Invalid resource specified";
+        case 8:
+            return "Operation failed - Something else went wrong";
+        case 9:
+            return "Invalid session key - Please re-authenticate";
+        case 10:
+            return "Invalid API key - You must be granted a valid key by last.fm";
+        case 11:
+            return "Service Offline - This service is temporarily offline. Try again later.";
+        case 12:
+            return "Subscribers Only - This station is only available to paid last.fm subscribers";
+        case 13:
+            return "Invalid method signature supplied";
+        case 14:
+            return "Unauthorized Token - This token has not been authorized";
+        case 15:
+            return "This item is not available for streaming";
+        case 16:
+            return "The service is temporarily unavailable, please try again";
+        case 17:
+            return "Login: User requires to be logged in";
+        case 18:
+            return "Trial Expired - This user has no free radio plays left. Subscription required.";
+        case 19:
+            return "This error does not exist";
+        case 20:
+            return "Not Enough Content - There is not enough content to play this station";
+        case 21:
+            return "Not Enough Members - This group does not have enough members for radio";
+        case 22:
+            return "Not Enough Fans - This artist does not have enough fans for for radio";
+        case 23:
+            return "Not Enough Neighbours - There are not enough neighbours for radio";
+        case 24:
+            return "No Peak Radio - This user is not allowed to listen to radio during peak usage";
+        case 25:
+            return "Radio Not Found - Radio station not found";
+        case 26:
+            return "API Key Suspended - This application is not allowed to make requests to the web services";
+        case 27:
+            return "Deprecated - This type of request is no longer supported";
+        case 29:
+            return "Rate Limit Exceeded - Your IP has made too many requests in a short period";
+        default:
+            return "Unknown error";
+    }
+}
+module.exports = {scrobbleSong, getRecentTracks, updateNowPlaying, scrobbleSongs};
 

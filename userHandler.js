@@ -17,12 +17,12 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 const { PythonShell } =require('python-shell');
 var fs = require('fs');
 const { spawn } = require('node:child_process');
-const DEBUGGING = false;
+const DEBUGGING = true;
 
 async function connect() {
     try {
         await client.connect();
-        alwaysLog("Connected correctly to server");
+        alwaysLog("Connected correctly to database");
         return true;
     } catch (err) {
         console.log(err.stack);
@@ -170,15 +170,17 @@ async function runLinkScript(){
         pythonOptions: ['-u'], // get print results in real-time
         scriptPath: './scripts' //If you are having python_test.py script in same folder, then it's optional.
     };
-     
+    log("Running script");
     const { success, err = '', results } = await new Promise( (resolve, reject) => {
         PythonShell.run('createAccessLink.py', options, function (err, result){
             if (err) reject({ success: false, err });
+            
             // result is an array consisting of messages collected
             //during execution of script.
             resolve({ success: true, results: result });
         });
     });
+    log(`Results: \nSuccess? ${success} \n Error: ${err} \n Results: ${results}`);
     return results;
 }
 
@@ -194,7 +196,7 @@ async function userAllowAccess(message) {
     log(link);
     await message.channel.send(`Here is your access link: \n\n ${link[1]} \n\n\n` +
     "Please use this link to allow access to your account. \n" +
-    "After you have allowed access, type **!setupLastFM** to finish setup.");
+    "After you have allowed access, type **!setupLastfm** to finish setup.");
 
     try {
         const db = client.db("Discbot");
@@ -229,6 +231,13 @@ async function runSessionKeyScript(token){
             if (err) reject({ success: false, err });
             // result is an array consisting of messages collected
             //during execution of script.
+            try {
+                if (result === null) {
+                    resolve({ success: false, results: "None" });
+                }
+            } catch (error) {
+                alwaysLog(error.stack);
+            }
             resolve({ success: true, results: result[0] });
         });
     });
