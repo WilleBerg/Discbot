@@ -25,6 +25,7 @@ async function connect() {
         alwaysLog("Connected correctly to database");
         return true;
     } catch (err) {
+        alwaysLog("Error connecting to database")
         console.log(err.stack);
         log(err.stack);
     }
@@ -35,6 +36,7 @@ async function close() {
         await client.close();
         alwaysLog("Closed connection");
     } catch (err) {
+        alwaysLog("Error closing connection to database")
         console.log(err.stack);
         log(err.stack);
     }
@@ -50,6 +52,7 @@ async function searchForUser(query, db) {
         log(typeof resp);
         return resp;
     } catch (err) {
+        alwaysLog("Error searching for user")
         log(err.stack);
     }
     // Return user
@@ -71,12 +74,12 @@ async function checkUser(user) {
             return true;
         }
     } catch (error) {
+        alwaysLog("Error checking user")
         alwaysLog(error.stack);
         return 'error';
     }
     
 }
-
 
 async function registerUser(user) {
     newUser = createUserObject(user);
@@ -98,6 +101,7 @@ async function registerUser(user) {
             return false;
         }
     } catch (err) {
+        alwaysLog("Error registering user")
         alwaysLog(err.stack);
         return false;
     }
@@ -130,6 +134,7 @@ async function hasAllowedAccess(user) {
             return true;
         } else return false;
     } catch (error) {
+
         alwaysLog(error.stack);
         return false;
     }
@@ -145,6 +150,7 @@ async function hasSessionKey(user) {
             return true;
         } else return false;
     } catch (error) {
+        alwaysLog("Error checking if user has session key")
         alwaysLog(error.stack);
         return false;
     }
@@ -158,11 +164,11 @@ async function getToken(user) {
         log(JSON.stringify(userInfo));
         return userInfo["lastFMToken"];
     } catch (error) {
+        alwaysLog("Error getting token")
         alwaysLog(error.stack);
         return false;
     }
 }
-
 
 async function runLinkScript(){
     let options = {
@@ -170,7 +176,7 @@ async function runLinkScript(){
         pythonOptions: ['-u'], // get print results in real-time
         scriptPath: './scripts' //If you are having python_test.py script in same folder, then it's optional.
     };
-    log("Running script");
+    log("Running get link script");
     const { success, err = '', results } = await new Promise( (resolve, reject) => {
         PythonShell.run('createAccessLink.py', options, function (err, result){
             if (err) reject({ success: false, err });
@@ -190,6 +196,7 @@ async function userAllowAccess(message) {
     try {
         link = await runLinkScript();
     } catch (error) {
+        alwaysLog("Error running link script")
         log(error.stack);
         return false;
     }
@@ -212,6 +219,7 @@ async function userAllowAccess(message) {
             return false;
         }
     } catch (error) {
+        alwaysLog("Error updating user")
         alwaysLog(error.stack);
         return false;
     }
@@ -246,6 +254,7 @@ async function runSessionKeyScript(token){
     return results;
 
 }
+
 async function setSessionKey(user) {
     try {
         log("Getting token");
@@ -268,6 +277,7 @@ async function setSessionKey(user) {
             return false;
         }
     } catch (error) {
+        alwaysLog("Error setting session key")
         alwaysLog(error.stack);
         return false;
     }
@@ -277,10 +287,13 @@ async function getSessionKey(user) {
     try {
         const db = client.db("Discbot");
         query = { "_id": user.id };
+        log("Getting session key")
         var userInfo = await searchForUser(query, db);
+        log("Got session key")
         log(JSON.stringify(userInfo));
         return userInfo["sessionKey"];
     } catch (error) {
+        alwaysLog("Error getting session key")
         alwaysLog(error.stack);
         return false;
     }
@@ -298,9 +311,9 @@ function log(message) {
       console.error(error);
       log("Error writing to log file");
     }
-  }
+}
 
-    function alwaysLog(message) {
+function alwaysLog(message) {
     var toSave = `[${new Date().toLocaleString()}] ${message}`;
     console.log(toSave);
     try {
