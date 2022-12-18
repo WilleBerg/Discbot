@@ -396,22 +396,22 @@ async function latestScrobbles(message){
     //end += 1;
     var msg = "\n";
     for (var i = start; i < tracks.length; i++){
-      msg += ((i) + ". " + tracks[i].artist["#text"] + " - " + tracks[i].name + "\n");
-      if (msg.length > 2000){
+      if (msg.length + ((i) + ". " + tracks[i].artist["#text"] + " - " + tracks[i].name + "\n").length > 2000){
         await message.channel.send(msg);
         msg = "\n";
       }
+      msg += ((i) + ". " + tracks[i].artist["#text"] + " - " + tracks[i].name + "\n");
     }
     await message.channel.send(msg);
     return
   }
   var msg = "\n";
   for (var i = 0; i < tracks.length; i++){
-    msg += ((i + 1) + ". " + tracks[i].artist["#text"] + " - " + tracks[i].name + "\n");
-    if (msg.length > 2000){
+    if (msg.length + ((i) + ". " + tracks[i].artist["#text"] + " - " + tracks[i].name + "\n").length > 2000){
       await message.channel.send(msg);
       msg = "\n";
     }
+    msg += ((i + 1) + ". " + tracks[i].artist["#text"] + " - " + tracks[i].name + "\n");
   }
   await message.channel.send(msg);
   return
