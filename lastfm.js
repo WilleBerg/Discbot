@@ -52,29 +52,46 @@ async function updateNowPlaying(songName, artistName, album, sessionKey){
 }
 
 async function scrobbleSongs(songs, sessionKey){
-
     var scrobbleList = [];
     for (let index = 0; index < songs.length; index++) {
         const song = songs[index];
         var scrobble = {
-            "artist": song.artistName,
-            "track": song.songName,
-            "album": song.album,
-            "timestamp": song.timestamp
+            "artist": song.artist["#text"],
+            "track": song.name,
+            "album": song.album["#text"],
+            "timestamp": song.date.uts
         };
         scrobbleList.push(scrobble);
     }
+    // TEMP FIX
+    for(let i = 0; i < scrobbleList.length; i++){
+        var result = await scrobbleSong(scrobbleList[i].track, scrobbleList[i].artist, scrobbleList[i].album, scrobbleList[i].timestamp, sessionKey);
+        log(`Scrobble response: ${JSON.stringify(result)}`);
+        if (result === 'error') {
+            log(`Error scrobbling song: ${scrobbleList[i].track} by ${scrobbleList[i].artist} on ${scrobbleList[i].album} at ${scrobbleList[i].timestamp}`);
+        } else if (result.error === 9) {
+            log(`Invalid session key`);
+            return 'invalidsession';
+        } else if ((result.scrobbles["@attr"] != null && result.scrobbles["@attr"] != undefined) && result.scrobbles["@attr"]["ignored"] == 1) {
+            log(`Song ignored: ${scrobbleList[i].track} by ${scrobbleList[i].artist} on ${scrobbleList[i].album} at ${scrobbleList[i].timestamp}`);
+            return 'songsignored';
+        }
+    }
+    return true;
+    /*
     var auth_sig = `api_key${LAST_FM_API_KEY}methodtrack.scrobblesk${sessionKey}${JSON.stringify(scrobbleList)}${secret}`;
     var auth_sig_md5Hex = md5(auth_sig);
     try {
         const url = `${LAST_FM_API_BASE}?method=track.scrobble&api_key=${LAST_FM_API_KEY}&sk=${sessionKey}&format=json&api_sig=${auth_sig_md5Hex}`;
         const response = await fetch(url, {'method': 'POST', 'body': JSON.stringify(scrobbleList)});
         const data = await response.json();
-        return data;
+        log(`Scrobble response: ${JSON.stringify(data)}`);
+        return true;
     } catch (error) {
         log(`Error from scrobbleSongs: ${error}`);
         return 'error';
     }
+    */
 }
 
 function log(message){
