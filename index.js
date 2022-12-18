@@ -7,7 +7,17 @@ const ply = require('play-dl');
 // DISCORDJS
 const { Client, Collection, Intents, VoiceChannel } = require('discord.js');
 const { token, prefix, googleApi } = require('./config.json');
-const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_MEMBERS] });
+const client = new Client({ intents: [
+  Intents.FLAGS.GUILDS, 
+  Intents.FLAGS.GUILD_MESSAGES, 
+  Intents.FLAGS.GUILDS, 
+  Intents.FLAGS.GUILD_VOICE_STATES, 
+  Intents.FLAGS.GUILD_MEMBERS, 
+  Intents.FLAGS.DIRECT_MESSAGES, 
+  Intents.FLAGS.DIRECT_MESSAGE_TYPING],
+  partials: ['CHANNEL']
+});
+
 const {
 	AudioPlayerStatus,
 	StreamType,
@@ -119,7 +129,8 @@ function createUpdateMessage(scrobblers){
 client.once('reconnecting', () => {
     console.log('Reconnecting!');
 });
-   client.once('disconnect', () => {
+
+client.once('disconnect', () => {
     console.log('Disconnect!');
 });
 
@@ -130,15 +141,25 @@ client.on('guildMemberAdd', member => {
 });
 
 client.on('messageCreate', async message => {
+    log(`Message received: ${message.content} : ${message.author.username} : ${message.channel.type}`); 
     if(message.author.bot) return;
-    
     if(!message.content.startsWith(prefix)) return;
-
-    const serverQueue = queue.get(message.guild.id);
-
-
-    handleMessage(message, serverQueue);
+    // respond to private message
+    if(message.channel.type == "DM"){
+      log("Private message");
+      log(message.content);
+      try {
+        handleMessage(message, null)
+      } catch (error) {
+        alwaysLog("Error in private message: ");
+        alwaysLog(error);
+      }
+    } else {
+      const serverQueue = queue.get(message.guild.id);
+      handleMessage(message, serverQueue);
+    }
 });
+// Responed to private message
 
 client.on('interactionCreate', async interaction => {
 	if (!interaction.isCommand()) return;
@@ -159,32 +180,35 @@ function handleMessage(message, serverQueue){
   // Perhaps a for-loop, just looping through commands?
   // But how to call correct function?
   alwaysLog(`Will try to handle ${message.content}`);
+  if (serverQueue == null) {
+    alwaysLog("Server queue is null, assuming private message");
+  }
   // !play
-  if (message.content.startsWith(`${prefix}play`)) {
+  if (message.content.startsWith(`${prefix}play`) && serverQueue != null) {
       execute(message, serverQueue);
       return;
   }
   // !skip 
-  else if (message.content.startsWith(`${prefix}skip`)) {
+  else if (message.content.startsWith(`${prefix}skip`) && serverQueue != null) {
       skip(message, serverQueue);
       return;
   } 
   // !stop
-  else if (message.content.startsWith(`${prefix}stop`)) {
+  else if (message.content.startsWith(`${prefix}stop`) && serverQueue != null) {
       stop(message, serverQueue);
       return;
   } 
   // !queue
-  else if (message.content.startsWith(`${prefix}q`)){
+  else if (message.content.startsWith(`${prefix}q`) && serverQueue != null) {
       printQueue(message, serverQueue);
   } 
   // !raindance
-  else if(message.content.startsWith(`${prefix}raindance`)){
+  else if(message.content.startsWith(`${prefix}raindance`) && serverQueue != null){
       message.content = "!play https://www.youtube.com/watch?v=aMTLs4qfJtI";
       execute(message, serverQueue);
   } 
   // !soviet
-  else if(message.content.startsWith(`${prefix}soviet`)){
+  else if(message.content.startsWith(`${prefix}soviet`) && serverQueue != null){
       message.content = "!play https://www.youtube.com/watch?v=U06jlgpMtQs";
       execute(message, serverQueue);
   } 
@@ -326,6 +350,10 @@ function handleMessage(message, serverQueue){
   else if(message.content.startsWith(`${prefix}multiscrobble`)){
     multiScrobbler(message);
   }
+  // !latestscrobbles
+  else if(message.content.startsWith(`${prefix}ls`)){
+    latestScrobbles(message);
+  }
   // !kachow
   // ty copilot
   else if(message.content.startsWith(`${prefix}kachow`)){
@@ -336,17 +364,62 @@ function handleMessage(message, serverQueue){
   }
 }
 
+async function latestScrobbles(message){
+  var mess = message.content.split(" ");
+  if (mess.length != 2){
+    message.channel.send("You need to enter a valid command! You need to enter a username!");
+    return;
+  }
+  var user = mess[1];
+  var recentTracks;
+  var mostRecentTrack;
+  var tracks;
+  try {
+    recentTracks = await getRecentTracks(user);
+    if (recentTracks == null || recentTracks == undefined){
+      message.channel.send("You need to enter a valid command! The user you entered does not have any recent tracks!");
+      return;
+    }
+    tracks = recentTracks.recenttracks.track;
+    mostRecentTrack = tracks[0];
+  } catch (error){
+    message.channel.send("You need to enter a valid command! The user you entered does not have any recent tracks!");
+    return;
+  }
+  var start = 0;
+  var isPlaying = mostRecentTrack["@attr"] != null && mostRecentTrack["@attr"]["nowplaying"] == "true";
+  if (isPlaying){
+    log("User is playing a song!")
+    start += 1;
+    // Since the most recent track is not playing, we need to start at the second most recent track
+    // However end should still be the same if end == 50
+    //end += 1;
+    var msg = "\n";
+    for (var i = start; i < tracks.length; i++){
+      msg += ((i) + ". " + tracks[i].artist["#text"] + " - " + tracks[i].name + "\n");
+    }
+    await message.channel.send(msg);
+    return
+  }
+  var msg = "\n";
+  for (var i = 0; i < tracks.length; i++){
+    msg += ((i + 1) + ". " + tracks[i].artist["#text"] + " - " + tracks[i].name + "\n");
+  }
+  await message.channel.send(msg);
+  return
+}
+
 async function multiScrobbler(message){
   var mess = message.content.split(" ");
   if (mess.length != 3){
-    message.channel.send("You need to enter a valid command!");
+    message.channel.send("You need to enter a valid command! You need to enter a username and a song range! You are missing something!");
     return;
   }
   // split the message into the username and the song range seperated by dash
   var user = mess[1];
   var songRange = mess[2].split("-");
   if (songRange.length != 2){
-    message.channel.send("You need to enter a valid command!");
+    message.channel.send("You need to enter a valid command! Your range is invalid!");
     return;
   }
   var start = parseInt(songRange[0]);
@@ -355,15 +428,24 @@ async function multiScrobbler(message){
     message.channel.send("You need to enter a valid command!");
     return;
   }
-  var recentTracks = await getRecentTracks(user);
-  if (recentTracks == null){
+  var recentTracks;
+  var mostRecentTrack;
+  var tracks;
+  try {
+    recentTracks = await getRecentTracks(user);
+    if (recentTracks == null || recentTracks == undefined){
+      message.channel.send("You need to enter a valid command! The user you entered does not have any recent tracks!");
+      return;
+    }
+    tracks = recentTracks.recenttracks.track;
+    mostRecentTrack = tracks[0];
+  } catch (error){
     message.channel.send("You need to enter a valid command! The user you entered does not have any recent tracks!");
     return;
   }
-  var tracks = recentTracks.recenttracks.track;
-  var mostRecentTrack = tracks[0];
+
   var isPlaying = mostRecentTrack["@attr"] != null && mostRecentTrack["@attr"]["nowplaying"] == "true";
-  if (!isPlaying){
+  if (isPlaying){
     start += 1;
     end += 1;
   }
@@ -374,15 +456,39 @@ async function multiScrobbler(message){
   var scrobbleList = [];
   for (var i = start; i <= end; i++){
     scrobbleList.push(tracks[i]);
+    log(JSON.stringify(tracks[i]));
   }
   //get session key
-  var sessionKey = await getSessionKey(message.author.id);
+  var sessionKey = await getSessionKey(message.author);
   if (sessionKey == false){
     message.channel.send("You do not have a valid session key! Please redo the lastFM setup process!"); 
     return;
   }
-  scrobbleSongs(sessionKey, scrobbleList); 
+  log("Session key: " + sessionKey);
+  log("Scrobbling songs: ")
+  for (var i = 0; i < scrobbleList.length; i++){
+    log("Scrobbling: " + scrobbleList[i].artist["#text"] + " - " + scrobbleList[i].name);
+  }
+  var result = await scrobbleSongs(scrobbleList, sessionKey); 
+  if (result == 'error'){
+    message.channel.send("Something went wrong while scrobbling the songs!"); 
+    return;
+  } else if (result == true) {
+    var msg = ""; 
+    for (var i = 0; i < scrobbleList.length; i++){
+      msg += (i + 1) + ". " + scrobbleList[i].artist["#text"] + " - " + scrobbleList[i].name + "\n";
+    }
+    message.channel.send("Scrobbles successful!\nScrobbled songs:\n" + msg);
+    return;
+  } else if (result == 'invalidsession') {
+    message.channel.send("Your session key is invalid! Please redo the lastFM setup process!"); 
+    return;
+  } else if(result == 'songsignored'){
+    message.channel.send("Something went wrong while scrobbling the songs! Aborted scrobbling!"); 
+    return;
+  }
 }
+
 async function updateScrobblers(){
   for (var i = 0; i < scrobblers.length; i++){
     if(scrobblers[i].remove){
@@ -444,7 +550,6 @@ async function updateScrobblers(){
         if (result["message"] != null && result["message"].startsWith("Invalid session key")){
           scrobblers[i]["user"].send("Your session key is invalid, please re-register your LastFM account with the bot");
           scrobblers[i].remove = true;
-          // TODO: remove scrobbler from array
           continue;
         }
         if (result == 'error'){
@@ -453,16 +558,18 @@ async function updateScrobblers(){
           continue;
         }
         log("Updated now playing for user " + scrobblers[i]["user"].username);
-        var resultScrobble = tryScrobble(secondMostRecentTrack, userLastScrobbled, sessionKey, scrobblers[i]["user"].username);
+        var resultScrobble = tryScrobble(secondMostRecentTrack, userLastScrobbled, sessionKey, scrobblers[i]["user"].username, scrobblers[i].isFirstScrobble);
         if(resultScrobble || userLastScrobbled == null){
+          scrobblers[i].isFirstScrobble = false;
           scrobblers[i]["lastScrobbledTrack"] = secondMostRecentTrack;
         } else continue;
       } else {
         var resultScrobble = tryScrobble(secondMostRecentTrack, userLastScrobbled, sessionKey, scrobblers[i]["user"].username);
         if(resultScrobble){
+          scrobblers[i].isFirstScrobble = false;
           scrobblers[i]["lastScrobbledTrack"] = secondMostRecentTrack;
         } else continue; 
-      }
+      } 
     } catch(err){
       alwaysLog("Error: " + err);
       continue;
@@ -470,11 +577,14 @@ async function updateScrobblers(){
   }
 }
 
-function tryScrobble(secondMostRecentTrack, userLastScrobbled, sessionKey, username){
+function tryScrobble(secondMostRecentTrack, userLastScrobbled, sessionKey, username, isFirstScrobble){
   if(isSameScrobble(secondMostRecentTrack, userLastScrobbled)){
     log("Same scrobble as last time");
     return false;
   } else {
+    if(isFirstScrobble)  {
+      return true;
+    }
     alwaysLog("Different scrobble than last time");
     var res = scrobbleSong(secondMostRecentTrack["name"], secondMostRecentTrack["artist"]["#text"], secondMostRecentTrack["album"]["#text"], secondMostRecentTrack["date"]["uts"], sessionKey);
     if (res != 'error'){
@@ -533,6 +643,8 @@ async function duoscrobble(message){
   timer = 0;
   await message.channel.send(`Will try to scrobble ${userToListen}'s songs for ${message.author.username}`);
 }
+
+
   
 async function setupLastFM(message){
   const resp = await setSessionKey(message.author)
