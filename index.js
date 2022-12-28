@@ -453,9 +453,9 @@ async function multiScrobbler(message){
   }
 
   var isPlaying = mostRecentTrack["@attr"] != null && mostRecentTrack["@attr"]["nowplaying"] == "true";
-  if (isPlaying){
-    start += 1;
-    end += 1;
+  if (!isPlaying){
+    start -= 1;
+    end -= 1;
   }
   if (tracks.length < end){
     message.channel.send("You need to enter a valid command! The user you entered does not have that many recent tracks!");
