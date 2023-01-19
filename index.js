@@ -212,7 +212,7 @@ function handleMessage(message, serverQueue) {
     // TODO: Redo this please
     // Perhaps a for-loop, just looping through commands?
     // But how to call correct function?
-    alwaysLog(`Will try to handle ${message.content}`);
+    alwaysLog(`Will try to handle ${message.content} from user ${message.author.username}`);
     if (serverQueue == null) {
         alwaysLog("Server queue is null, assuming private message");
     }
