@@ -10,13 +10,17 @@ seperate function, but instead just call it once.
 
 // TODO: Add child check function
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
-const { mongoUsername, mongoPassword, mongoUrl } = require('./config.json');
-const uri = `mongodb+srv://${ mongoUsername }:${ mongoPassword }@${ mongoUrl }/?retryWrites=true&w=majority`; 
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
-const { PythonShell } =require('python-shell');
-var fs = require('fs');
-const { spawn } = require('node:child_process');
+const { MongoClient, ServerApiVersion } = require("mongodb");
+const { mongoUsername, mongoPassword, mongoUrl } = require("./config.json");
+const uri = `mongodb+srv://${mongoUsername}:${mongoPassword}@${mongoUrl}/?retryWrites=true&w=majority`;
+const client = new MongoClient(uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverApi: ServerApiVersion.v1,
+});
+const { PythonShell } = require("python-shell");
+var fs = require("fs");
+const { spawn } = require("node:child_process");
 const DEBUGGING = false;
 
 async function connect() {
@@ -25,7 +29,7 @@ async function connect() {
         alwaysLog("Connected correctly to database");
         return true;
     } catch (err) {
-        alwaysLog("Error connecting to database")
+        alwaysLog("Error connecting to database");
         console.log(err.stack);
         log(err.stack);
     }
@@ -36,7 +40,7 @@ async function close() {
         await client.close();
         alwaysLog("Closed connection");
     } catch (err) {
-        alwaysLog("Error closing connection to database")
+        alwaysLog("Error closing connection to database");
         console.log(err.stack);
         log(err.stack);
     }
@@ -52,7 +56,7 @@ async function searchForUser(query, db) {
         log(typeof resp);
         return resp;
     } catch (err) {
-        alwaysLog("Error searching for user")
+        alwaysLog("Error searching for user");
         log(err.stack);
     }
     // Return user
@@ -63,8 +67,8 @@ async function checkUser(user) {
     try {
         const db = client.db("Discbot");
         const collection = db.collection("users");
-        log(user.id)
-        var query = { "_id": user.id };
+        log(user.id);
+        var query = { _id: user.id };
         const userQueryResp = await searchForUser(query, db);
         log(userQueryResp);
         log(typeof userQueryResp);
@@ -74,11 +78,10 @@ async function checkUser(user) {
             return true;
         }
     } catch (error) {
-        alwaysLog("Error checking user")
+        alwaysLog("Error checking user");
         alwaysLog(error.stack);
-        return 'error';
+        return "error";
     }
-    
 }
 
 async function registerUser(user) {
@@ -95,13 +98,12 @@ async function registerUser(user) {
             } else {
                 return false;
             }
-        }
-        catch (error) {
+        } catch (error) {
             log(error.stack);
             return false;
         }
     } catch (err) {
-        alwaysLog("Error registering user")
+        alwaysLog("Error registering user");
         alwaysLog(err.stack);
         return false;
     }
@@ -113,44 +115,41 @@ function createUserObject(user) {
 
     // All of this depends on how discord handles users
     let newUser = {
-        "_id": user.id,
-        "username": user.username,
-        "hasAllowedAccess": false,
-        "hasSessionKey" : false,
-        "sessionKey": null,
-        "lastFMToken" : null
-    }
+        _id: user.id,
+        username: user.username,
+        hasAllowedAccess: false,
+        hasSessionKey: false,
+        sessionKey: null,
+        lastFMToken: null,
+    };
 
     return newUser;
 }
 
 async function hasAllowedAccess(user) {
-    
     try {
         const db = client.db("Discbot");
-        query = { "_id": user.id };
+        query = { _id: user.id };
         var userInfo = await searchForUser(query, db);
         if (userInfo["hasAllowedAccess"] == true) {
             return true;
         } else return false;
     } catch (error) {
-
         alwaysLog(error.stack);
         return false;
     }
-    
 }
 
 async function hasSessionKey(user) {
     try {
         const db = client.db("Discbot");
-        query = { "_id": user.id };
+        query = { _id: user.id };
         var userInfo = await searchForUser(query, db);
         if (userInfo["hasSessionKey"] == true) {
             return true;
         } else return false;
     } catch (error) {
-        alwaysLog("Error checking if user has session key")
+        alwaysLog("Error checking if user has session key");
         alwaysLog(error.stack);
         return false;
     }
@@ -159,83 +158,94 @@ async function hasSessionKey(user) {
 async function getToken(user) {
     try {
         const db = client.db("Discbot");
-        query = { "_id": user.id };
+        query = { _id: user.id };
         var userInfo = await searchForUser(query, db);
         log(JSON.stringify(userInfo));
         return userInfo["lastFMToken"];
     } catch (error) {
-        alwaysLog("Error getting token")
+        alwaysLog("Error getting token");
         alwaysLog(error.stack);
         return false;
     }
 }
 
-async function runLinkScript(){
+async function runLinkScript() {
     let options = {
-        mode: 'text',
-        pythonOptions: ['-u'], // get print results in real-time
-        scriptPath: './scripts' //If you are having python_test.py script in same folder, then it's optional.
+        mode: "text",
+        pythonOptions: ["-u"], // get print results in real-time
+        scriptPath: "./scripts", //If you are having python_test.py script in same folder, then it's optional.
     };
     log("Running get link script");
-    const { success, err = '', results } = await new Promise( (resolve, reject) => {
-        PythonShell.run('createAccessLink.py', options, function (err, result){
+    const {
+        success,
+        err = "",
+        results,
+    } = await new Promise((resolve, reject) => {
+        PythonShell.run("createAccessLink.py", options, function (err, result) {
             if (err) reject({ success: false, err });
-            
+
             // result is an array consisting of messages collected
             //during execution of script.
             resolve({ success: true, results: result });
         });
     });
-    log(`Results: \nSuccess? ${success} \n Error: ${err} \n Results: ${results}`);
+    log(
+        `Results: \nSuccess? ${success} \n Error: ${err} \n Results: ${results}`
+    );
     return results;
 }
 
 async function userAllowAccess(message) {
-
     link = "";
     try {
         link = await runLinkScript();
     } catch (error) {
-        alwaysLog("Error running link script")
+        alwaysLog("Error running link script");
         log(error.stack);
         return false;
     }
     log(link);
-    await message.channel.send(`Here is your access link: \n\n ${link[1]} \n\n\n` +
-    "Please use this link to allow access to your account. \n" +
-    "After you have allowed access, type **!setupLastfm** to finish setup.");
+    await message.channel.send(
+        `Here is your access link: \n\n ${link[1]} \n\n\n` +
+            "Please use this link to allow access to your account. \n" +
+            "After you have allowed access, type **!setupLastfm** to finish setup."
+    );
 
     try {
         const db = client.db("Discbot");
-        var query = { "_id": message.author.id };
-        var newValues = { $set: { "hasAllowedAccess": true , "lastFMToken" : link[0] } };
-        const resp = await db.collection("users").
-        updateOne(query, newValues);
+        var query = { _id: message.author.id };
+        var newValues = {
+            $set: { hasAllowedAccess: true, lastFMToken: link[0] },
+        };
+        const resp = await db.collection("users").updateOne(query, newValues);
         log(JSON.stringify(resp));
         if (resp["acknowledged"] == true) {
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     } catch (error) {
-        alwaysLog("Error updating user")
+        alwaysLog("Error updating user");
         alwaysLog(error.stack);
         return false;
     }
 }
 
-async function runSessionKeyScript(token){
+async function runSessionKeyScript(token) {
     let options = {
-        mode: 'text',
-        pythonOptions: ['-u'], // get print results in real-time
-        scriptPath: './scripts', //If you are having python_test.py script in same folder, then it's optional.
-        args: [ token ]
+        mode: "text",
+        pythonOptions: ["-u"], // get print results in real-time
+        scriptPath: "./scripts", //If you are having python_test.py script in same folder, then it's optional.
+        args: [token],
     };
-    
+
     log("Running session key script");
-    const { success, err = '', results } = await new Promise( (resolve, reject) => {
-        PythonShell.run('pask.py', options, function (err, result){
+    const {
+        success,
+        err = "",
+        results,
+    } = await new Promise((resolve, reject) => {
+        PythonShell.run("pask.py", options, function (err, result) {
             if (err) reject({ success: false, err });
             // result is an array consisting of messages collected
             //during execution of script.
@@ -250,9 +260,10 @@ async function runSessionKeyScript(token){
         });
     });
     log("Session key script finished");
-    log(`Results: \nSuccess? ${success} \n Error: ${err} \n Results: ${results}`);
+    log(
+        `Results: \nSuccess? ${success} \n Error: ${err} \n Results: ${results}`
+    );
     return results;
-
 }
 
 async function setSessionKey(user) {
@@ -265,19 +276,17 @@ async function setSessionKey(user) {
             return false;
         }
         const db = client.db("Discbot");
-        var query = { "_id": user.id };
-        var newValues = { $set: { "sessionKey": sessionKey } };
-        const resp = await db.collection("users").
-        updateOne(query, newValues);
+        var query = { _id: user.id };
+        var newValues = { $set: { sessionKey: sessionKey } };
+        const resp = await db.collection("users").updateOne(query, newValues);
         log(JSON.stringify(resp));
         if (resp["acknowledged"] == true) {
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     } catch (error) {
-        alwaysLog("Error setting session key")
+        alwaysLog("Error setting session key");
         alwaysLog(error.stack);
         return false;
     }
@@ -286,30 +295,30 @@ async function setSessionKey(user) {
 async function getSessionKey(user) {
     try {
         const db = client.db("Discbot");
-        query = { "_id": user.id };
-        log("Getting session key")
+        query = { _id: user.id };
+        log("Getting session key");
         var userInfo = await searchForUser(query, db);
-        log("Got session key")
+        log("Got session key");
         log(JSON.stringify(userInfo));
         return userInfo["sessionKey"];
     } catch (error) {
-        alwaysLog("Error getting session key")
+        alwaysLog("Error getting session key");
         alwaysLog(error.stack);
         return false;
     }
 }
 
 function log(message) {
-    if(!DEBUGGING) return;
+    if (!DEBUGGING) return;
     var toSave = `[${new Date().toLocaleString()}] ${message}`;
     console.log(toSave);
     try {
-      fs.appendFile("./log/databaseLog.log", toSave + "\n", (err) => {
-        if(err) log(`ERROR: currently inside callback: ${err}`);
-       });
+        fs.appendFile("./log/databaseLog.log", toSave + "\n", (err) => {
+            if (err) log(`ERROR: currently inside callback: ${err}`);
+        });
     } catch (error) {
-      console.error(error);
-      log("Error writing to log file");
+        console.error(error);
+        log("Error writing to log file");
     }
 }
 
@@ -318,14 +327,20 @@ function alwaysLog(message) {
     console.log(toSave);
     try {
         fs.appendFile("./log/databaseLog.log", toSave + "\n", (err) => {
-        if(err) log(`ERROR: currently inside callback: ${err}`);
+            if (err) log(`ERROR: currently inside callback: ${err}`);
         });
     } catch (error) {
         console.error(error);
         alwaysLog("Error writing to log file");
     }
 }
-module.exports = { checkUser, registerUser, hasSessionKey, setSessionKey, connect, close, userAllowAccess, getSessionKey };
-
-
-  
+module.exports = {
+    checkUser,
+    registerUser,
+    hasSessionKey,
+    setSessionKey,
+    connect,
+    close,
+    userAllowAccess,
+    getSessionKey,
+};

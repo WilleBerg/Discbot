@@ -1,13 +1,19 @@
-const fetch = require('node-fetch');
-const md5   = require("blueimp-md5");
-const { apiKey, secret } = require('./config.json');
-const fs = require('fs');
+const fetch = require("node-fetch");
+const md5 = require("blueimp-md5");
+const { apiKey, secret } = require("./config.json");
+const fs = require("fs");
 
 const LAST_FM_API_KEY = apiKey;
-const LAST_FM_API_BASE = 'http://ws.audioscrobbler.com/2.0/';
+const LAST_FM_API_BASE = "http://ws.audioscrobbler.com/2.0/";
 const DEBUGGING = true;
 
-async function scrobbleSong(songName, artistName, album, timestamp, sessionKey){
+async function scrobbleSong(
+    songName,
+    artistName,
+    album,
+    timestamp,
+    sessionKey
+) {
     var auth_sig = `album${album}api_key${LAST_FM_API_KEY}artist${artistName}methodtrack.scrobblesk${sessionKey}timestamp${timestamp}track${songName}${secret}`;
     var auth_sig_md5Hex = md5(auth_sig);
     songName = encodeURIComponent(songName);
@@ -15,66 +21,80 @@ async function scrobbleSong(songName, artistName, album, timestamp, sessionKey){
     artistName = encodeURIComponent(artistName);
     try {
         const url = `${LAST_FM_API_BASE}?method=track.scrobble&api_key=${LAST_FM_API_KEY}&sk=${sessionKey}&artist=${artistName}&track=${songName}&album=${album}&timestamp=${timestamp}&format=json&api_sig=${auth_sig_md5Hex}`;
-        const response = await fetch(url, {'method': 'POST'});
+        const response = await fetch(url, { method: "POST" });
         const data = await response.json();
         return data;
     } catch (error) {
         log(`Error from scrobbleSong: ${error}`);
-        return 'error';
+        return "error";
     }
 }
 
-async function getRecentTracks(username, limit, page){
+async function getRecentTracks(username, limit, page) {
     try {
         var url = `${LAST_FM_API_BASE}?method=user.getrecenttracks&user=${username}&api_key=${LAST_FM_API_KEY}&format=json&limit=${limit}&page=${page}`;
-        return await fetch(url).then(response => response.json());    
+        return await fetch(url).then((response) => response.json());
     } catch (error) {
         log(`Error from getRecentTracks: ${error}`);
-        return 'error';
+        return "error";
     }
 }
 
-async function updateNowPlaying(songName, artistName, album, sessionKey){
+async function updateNowPlaying(songName, artistName, album, sessionKey) {
     var auth_sig = `album${album}api_key${LAST_FM_API_KEY}artist${artistName}methodtrack.updateNowPlayingsk${sessionKey}track${songName}${secret}`;
     var auth_sig_md5Hex = md5(auth_sig);
-    songName = encodeURIComponent(songName); 
+    songName = encodeURIComponent(songName);
     album = encodeURIComponent(album);
     artistName = encodeURIComponent(artistName);
     const url = `${LAST_FM_API_BASE}?method=track.updateNowPlaying&api_key=${LAST_FM_API_KEY}&sk=${sessionKey}&artist=${artistName}&track=${songName}&album=${album}&format=json&api_sig=${auth_sig_md5Hex}`;
     try {
-        const response = await fetch(url, {'method': 'POST'});
+        const response = await fetch(url, { method: "POST" });
         const data = await response.json();
         return data;
     } catch (error) {
         log(`Error from updateNowPlaying: ${error}`);
-        return 'error';
+        return "error";
     }
 }
 
-async function scrobbleSongs(songs, sessionKey){
+async function scrobbleSongs(songs, sessionKey) {
     var scrobbleList = [];
     for (let index = 0; index < songs.length; index++) {
         const song = songs[index];
         var scrobble = {
-            "artist": song.artist["#text"],
-            "track": song.name,
-            "album": song.album["#text"],
-            "timestamp": song.date.uts
+            artist: song.artist["#text"],
+            track: song.name,
+            album: song.album["#text"],
+            timestamp: song.date.uts,
         };
         scrobbleList.push(scrobble);
     }
     // TEMP FIX
-    for(let i = 0; i < scrobbleList.length; i++){
-        var result = await scrobbleSong(scrobbleList[i].track, scrobbleList[i].artist, scrobbleList[i].album, scrobbleList[i].timestamp, sessionKey);
+    for (let i = 0; i < scrobbleList.length; i++) {
+        var result = await scrobbleSong(
+            scrobbleList[i].track,
+            scrobbleList[i].artist,
+            scrobbleList[i].album,
+            scrobbleList[i].timestamp,
+            sessionKey
+        );
         log(`Scrobble response: ${JSON.stringify(result)}`);
-        if (result === 'error') {
-            log(`Error scrobbling song: ${scrobbleList[i].track} by ${scrobbleList[i].artist} on ${scrobbleList[i].album} at ${scrobbleList[i].timestamp}`);
+        if (result === "error") {
+            log(
+                `Error scrobbling song: ${scrobbleList[i].track} by ${scrobbleList[i].artist} on ${scrobbleList[i].album} at ${scrobbleList[i].timestamp}`
+            );
         } else if (result.error === 9) {
             log(`Invalid session key`);
-            return 'invalidsession';
-        } else if ((result.scrobbles["@attr"] != null && result.scrobbles["@attr"] != undefined) && result.scrobbles["@attr"]["ignored"] == 1) {
-            log(`Song ignored: ${scrobbleList[i].track} by ${scrobbleList[i].artist} on ${scrobbleList[i].album} at ${scrobbleList[i].timestamp}`);
-            return 'songsignored';
+            return "invalidsession";
+        } else if (
+            result.scrobbles["@attr"] != null &&
+            result.scrobbles["@attr"] != undefined &&
+            result.scrobbles["@attr"]["ignored"] == 1
+        ) {
+            log(
+                `Song ignored: ${scrobbleList[i].track} by ${scrobbleList[i].artist} on ${scrobbleList[i].album} at ${scrobbleList[i].timestamp}`
+            );
+            return "songsignored";
         }
     }
     return true;
@@ -94,23 +114,22 @@ async function scrobbleSongs(songs, sessionKey){
     */
 }
 
-function log(message){
-    if(!DEBUGGING) return;
+function log(message) {
+    if (!DEBUGGING) return;
     var toSave = `[${new Date().toLocaleString()}] ${message}`;
     console.log(toSave);
     try {
         fs.appendFile("./log/lastfmLog.log", toSave + "\n", (err) => {
-            if(err) log(`ERROR: currently inside callback: ${err}`);
+            if (err) log(`ERROR: currently inside callback: ${err}`);
         });
     } catch (error) {
         console.error(error);
         log("Error writing to log file");
     }
 }
-
-
-function convertErrorCode(errorCode){
-    switch(errorCode){
+// why did i do this
+function convertErrorCode(errorCode) {
+    switch (errorCode) {
         case 2:
             return "Invalid service - This service does not exist";
         case 3:
@@ -169,5 +188,9 @@ function convertErrorCode(errorCode){
             return "Unknown error";
     }
 }
-module.exports = {scrobbleSong, getRecentTracks, updateNowPlaying, scrobbleSongs};
-
+module.exports = {
+    scrobbleSong,
+    getRecentTracks,
+    updateNowPlaying,
+    scrobbleSongs,
+};
