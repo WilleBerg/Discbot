@@ -47,7 +47,7 @@ const {
     scrobbleSongs,
 } = require("./lastfm.js");
 
-const DEBUGGING = false;
+const DEBUGGING = true;
 
 let timer = 0;
 let updateTimer = 0;
@@ -212,7 +212,9 @@ function handleMessage(message, serverQueue) {
     // TODO: Redo this please
     // Perhaps a for-loop, just looping through commands?
     // But how to call correct function?
-    alwaysLog(`Will try to handle ${message.content} from user ${message.author.username}`);
+    alwaysLog(
+        `Will try to handle ${message.content} from user ${message.author.username}`
+    );
     if (serverQueue == null) {
         alwaysLog("Server queue is null, assuming private message");
     }
@@ -436,18 +438,30 @@ function handleMessage(message, serverQueue) {
 
 async function latestScrobbles(message) {
     var mess = message.content.split(" ");
-    if (mess.length != 2) {
+    if (mess.length > 3) {
         message.channel.send(
             "You need to enter a valid command! You need to enter a username!"
         );
         return;
     }
     var user = mess[1];
+    var amount;
+    if (mess.length == 3 && !isNaN(mess[2])) {
+        amount = mess[2];
+        if (amount > 200) {
+            message.channel.send(
+                "You can only get 200 scrobbles at a time!"
+            );
+            amount = 200;
+        }
+    } else {
+        amount = 50;
+    }
     var recentTracks;
     var mostRecentTrack;
     var tracks;
     try {
-        recentTracks = await getRecentTracks(user);
+        recentTracks = await getRecentTracks(user, 200);
         if (recentTracks == null || recentTracks == undefined) {
             message.channel.send(
                 "You need to enter a valid command! The user you entered does not have any recent tracks!"
@@ -469,11 +483,12 @@ async function latestScrobbles(message) {
     if (isPlaying) {
         log("User is playing a song!");
         start += 1;
+        amount++;
         // Since the most recent track is not playing, we need to start at the second most recent track
         // However end should still be the same if end == 50
         //end += 1;
         var msg = "\n";
-        for (var i = start; i < tracks.length; i++) {
+        for (var i = start; i < amount; i++) {
             if (
                 msg.length +
                     (
@@ -501,7 +516,7 @@ async function latestScrobbles(message) {
         return;
     }
     var msg = "\n";
-    for (var i = 0; i < tracks.length; i++) {
+    for (var i = 0; i < amount; i++) {
         if (
             msg.length +
                 (
@@ -553,11 +568,17 @@ async function multiScrobbler(message) {
         message.channel.send("You need to enter a valid command!");
         return;
     }
+    if (start > end) {
+        message.channel.send(
+            "You need to enter a valid command! Your range is invalid!"
+        );
+        return;
+    }
     var recentTracks;
     var mostRecentTrack;
     var tracks;
     try {
-        recentTracks = await getRecentTracks(user);
+        recentTracks = await getRecentTracks(user, 200, 1);
         if (recentTracks == null || recentTracks == undefined) {
             message.channel.send(
                 "You need to enter a valid command! The user you entered does not have any recent tracks!"
@@ -616,9 +637,25 @@ async function multiScrobbler(message) {
         );
         return;
     } else if (result == true) {
-        var msg = "";
+        var msg = [];
+        var tmpMsg = "";
         for (var i = 0; i < scrobbleList.length; i++) {
-            msg +=
+            if (
+                tmpMsg.length +
+                    (
+                        i +
+                        ". " +
+                        scrobbleList[i].artist["#text"] +
+                        " - " +
+                        scrobbleList[i].name +
+                        "\n"
+                    ).length >
+                2000
+            ) {
+                msg.push(tmpMsg);
+                tmpMsg = "";
+            }
+            tmpMsg +=
                 i +
                 1 +
                 ". " +
@@ -627,7 +664,12 @@ async function multiScrobbler(message) {
                 scrobbleList[i].name +
                 "\n";
         }
-        message.channel.send("Scrobbles successful!\nScrobbled songs:\n" + msg);
+        msg.push(tmpMsg);
+        message.channel.send("Scrobbles successful!\nScrobbled songs:\n");
+        for (var i = 0; i < msg.length; i++) {
+            log("Sending message: " + msg[i]);
+            await message.channel.send(msg[i]);
+        }
         return;
     } else if (result == "invalidsession") {
         message.channel.send(
