@@ -47,7 +47,9 @@ const {
     scrobbleSongs,
 } = require("./lastfm.js");
 
-const DEBUGGING = true;
+// TODO TODO TODO TDOOD
+// CHANGE WAY OF DOING THIS PLSSS
+const DEBUGGING = false;
 
 let timer = 0;
 let updateTimer = 0;
