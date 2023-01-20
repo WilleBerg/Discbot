@@ -50,7 +50,7 @@ const {
 
 // TODO TODO TODO TDOOD
 // CHANGE WAY OF DOING THIS PLSSS
-const DEBUGGING = true;
+const DEBUGGING = false;
 
 let timer = 0;
 let updateTimer = 0;
@@ -452,9 +452,7 @@ async function latestScrobbles(message) {
     if (mess.length == 3 && !isNaN(mess[2])) {
         amount = mess[2];
         if (amount > 200) {
-            message.channel.send(
-                "You can only get 200 scrobbles at a time!"
-            );
+            message.channel.send("You can only get 200 scrobbles at a time!");
             amount = 200;
         }
     } else {
@@ -550,31 +548,45 @@ async function latestScrobbles(message) {
 
 async function multiScrobbler(message) {
     var mess = message.content.split(" ");
-    if (mess.length != 3) {
-        message.channel.send(
-            "You need to enter a valid command! You need to enter a username and a song range! You are missing something!"
-        );
-        return;
-    }
+    // if (mess.length != 3) {
+    //     message.channel.send(
+    //         "You need to enter a valid command! You need to enter a username and a song range! You are missing something!"
+    //     );
+    //     return;
+    // }
     // split the message into the username and the song range seperated by dash
     var user = mess[1];
-    var songRange = mess[2].split("-");
-    if (songRange.length != 2) {
-        message.channel.send(
-            "You need to enter a valid command! Your range is invalid!"
-        );
-        return;
+    var songRangesRaw = [];
+    for (var i = 2; i < mess.length; i++) {
+        songRangesRaw.push(mess[i]);
     }
-    var start = parseInt(songRange[0]);
-    var end = parseInt(songRange[1]);
-    if (isNaN(start) || isNaN(end)) {
-        message.channel.send("You need to enter a valid command!");
-        return;
-    }
-    if (start > end) {
-        message.channel.send(
-            "You need to enter a valid command! Your range is invalid!"
-        );
+    var songRanges = [];
+    try {
+        for (var i = 0; i < songRangesRaw.length; i++) {
+            var songRange = songRangesRaw[i].split("-");
+            if (songRange.length != 2) {
+                message.channel.send(
+                    "You need to enter a valid command! Your range is invalid!"
+                );
+                return;
+            }
+            var start = parseInt(songRange[0]);
+            var end = parseInt(songRange[1]);
+            if (isNaN(start) || isNaN(end)) {
+                message.channel.send("You need to enter a valid command!");
+                return;
+            }
+            if (start > end) {
+                message.channel.send(
+                    "You need to enter a valid command! Your range is invalid!"
+                );
+                return;
+            }
+            log("Song range: " + songRange)
+            songRanges.push(songRange);
+        }
+    } catch {
+        message.channel.send("You need to enter a valid command! Something is wrong with your song ranges!");
         return;
     }
     var recentTracks;
@@ -596,24 +608,33 @@ async function multiScrobbler(message) {
         );
         return;
     }
-
-    var isPlaying =
+    log("Song ranges: " + songRanges);
+    var scrobbleList = [];
+    var set = new Set();
+    for (var i = 0; i < songRanges.length; i++) {
+        var start = parseInt(songRanges[i][0]);
+        var end = parseInt(songRanges[i][1]);
+        log("Start: " + start + " End: " + end)
+        var isPlaying =
         mostRecentTrack["@attr"] != null &&
         mostRecentTrack["@attr"]["nowplaying"] == "true";
-    if (!isPlaying) {
-        start -= 1;
-        end -= 1;
-    }
-    if (tracks.length < end) {
-        message.channel.send(
-            "You need to enter a valid command! The user you entered does not have that many recent tracks!"
-        );
-        return;
-    }
-    var scrobbleList = [];
-    for (var i = start; i <= end; i++) {
-        scrobbleList.push(tracks[i]);
-        log(JSON.stringify(tracks[i]));
+        if (!isPlaying) {
+            log("User is not playing a song!");
+            start -= 1;
+            end -= 1;
+        }
+        if (tracks.length < end) {
+            message.channel.send(
+                "You need to enter a valid command! The user you entered does not have that many recent tracks!"
+            );
+            return;
+        }
+        for (var j = start; j <= end; j++) {
+            if (set.has(j)) continue;
+            scrobbleList.push(tracks[j]);
+            log(JSON.stringify(tracks[j].name));
+            set.add(j);
+        }
     }
     //get session key
     var sessionKey = await getSessionKey(message.author);
@@ -629,6 +650,8 @@ async function multiScrobbler(message) {
     var albums = [];
     var artists = [];
     var timestamps = [];
+    var results = [];
+    var counter = 0;
     for (var i = 0; i < scrobbleList.length; i++) {
         log(
             "Scrobbling: " +
@@ -640,106 +663,114 @@ async function multiScrobbler(message) {
         albums.push(scrobbleList[i].album["#text"]);
         artists.push(scrobbleList[i].artist["#text"]);
         timestamps.push(scrobbleList[i].date.uts);
+        if (counter == 49 || i == scrobbleList.length - 1) {
+            var result = await scrobbleSongs(
+                songs,
+                artists,
+                albums,
+                timestamps,
+                sessionKey
+            );
+            results.push(result);
+            songs = [];
+            albums = [];
+            artists = [];
+            timestamps = [];
+            counter = 0;
+        }
+        counter++;
     }
     //var result1 = await scrobbleSong(songs[0], artists[0], albums[0], timestamps[0], sessionKey);
     //log("Result: " + JSON.stringify(result1));
 
     // create a 2d matrix with every binary combination from 0 - 31
-    var combinations = [
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1],
-        [0, 0, 0, 1, 0],
-        [0, 0, 0, 1, 1],
-        [0, 0, 1, 0, 0],
-        [0, 0, 1, 0, 1],
-        [0, 0, 1, 1, 0],
-        [0, 0, 1, 1, 1],
-        [0, 1, 0, 0, 0],
-        [0, 1, 0, 0, 1],
-        [0, 1, 0, 1, 0],
-        [0, 1, 0, 1, 1],
-        [0, 1, 1, 0, 0],
-        [0, 1, 1, 0, 1],
-        [0, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1],
-        [1, 0, 0, 0, 0],
-        [1, 0, 0, 0, 1],
-        [1, 0, 0, 1, 0],
-        [1, 0, 0, 1, 1],
-        [1, 0, 1, 0, 0],
-        [1, 0, 1, 0, 1],
-        [1, 0, 1, 1, 0],
-        [1, 0, 1, 1, 1],
-        [1, 1, 0, 0, 0],
-        [1, 1, 0, 0, 1],
-        [1, 1, 0, 1, 0],
-        [1, 1, 0, 1, 1],
-        [1, 1, 1, 0, 0],
-        [1, 1, 1, 0, 1],
-        [1, 1, 1, 1, 0],
-        [1, 1, 1, 1, 1],
-    ];
-    for (var i = 0; i < combinations.length; i++) {
-        var resul = await testScrobbles(songs, artists, albums, timestamps, sessionKey, combinations[i][0], combinations[i][1], combinations[i][2], combinations[i][3], combinations[i][4]);
-        if (resul == false) continue;
-        log("Result: " + JSON.stringify(resul));
-    }
+    // var combinations = [
+    // [0, 0, 0, 0, 0],
+    // [0, 0, 0, 0, 1],
+    // [0, 0, 0, 1, 0],
+    // [0, 0, 0, 1, 1],
+    // [0, 0, 1, 0, 0],
+    // [0, 0, 1, 0, 1],
+    // [0, 0, 1, 1, 0],
+    // [0, 0, 1, 1, 1],
+    // [0, 1, 0, 0, 0],
+    // [0, 1, 0, 0, 1],
+    // [0, 1, 0, 1, 0],
+    // [0, 1, 0, 1, 1],
+    // [0, 1, 1, 0, 0],
+    // [0, 1, 1, 0, 1],
+    // [0, 1, 1, 1, 0],
+    // [0, 1, 1, 1, 1],
+    // [1, 0, 0, 0, 0],
+    // [1, 0, 0, 0, 1],
+    // [1, 0, 0, 1, 0],
+    // [1, 0, 0, 1, 1],
+    // [1, 0, 1, 0, 0],
+    // [1, 0, 1, 0, 1],
+    // [1, 0, 1, 1, 0],
+    // [1, 0, 1, 1, 1],
+    // [1, 1, 0, 0, 0],
+    // [1, 1, 0, 0, 1],
+    // [1, 1, 0, 1, 0],
+    // [1, 1, 0, 1, 1],
+    // [1, 1, 1, 0, 0],
+    // [1, 1, 1, 0, 1],
+    // [1, 1, 1, 1, 0],
+    // [1, 1, 1, 1, 1],
+    // ];
+    // for (var i = 0; i < combinations.length; i++) {
+    //     var resul = await testScrobbles(songs, artists, albums, timestamps, sessionKey, combinations[i][0], combinations[i][1], combinations[i][2], combinations[i][3], combinations[i][4]);
+    //     if (resul == false) continue;
+    //     log("Result: " + JSON.stringify(resul));
+    // }
 
-
-
-    var result = await scrobbleSongs(songs, artists, albums, timestamps, sessionKey);
-    log("Result: " + JSON.stringify(result));
-    if (result == "error") {
-        message.channel.send(
-            "Something went wrong while scrobbling the songs!"
-        );
-        return;
-    } else if (result == true) {
-        var msg = [];
-        var tmpMsg = "";
-        for (var i = 0; i < scrobbleList.length; i++) {
-            if (
-                tmpMsg.length +
-                    (
-                        i +
-                        ". " +
-                        scrobbleList[i].artist["#text"] +
-                        " - " +
-                        scrobbleList[i].name +
-                        "\n"
-                    ).length >
-                2000
-            ) {
-                msg.push(tmpMsg);
-                tmpMsg = "";
-            }
-            tmpMsg +=
-                i +
-                1 +
-                ". " +
-                scrobbleList[i].artist["#text"] +
-                " - " +
-                scrobbleList[i].name +
-                "\n";
+    for (var i = 0; i < results.length; i++) {
+        if (results[i] == "error") {
+            message.channel.send(
+                "Something went wrong while scrobbling the songs!"
+            );
+            return;
+        } else if (results[i] == "invalidsession") {
+            message.channel.send(
+                "Your session key is invalid! Please redo the lastFM setup process!"
+            );
+            return;
         }
-        msg.push(tmpMsg);
-        message.channel.send("Scrobbles successful!\nScrobbled songs:\n");
-        for (var i = 0; i < msg.length; i++) {
-            log("Sending message: " + msg[i]);
-            await message.channel.send(msg[i]);
-        }
-        return;
-    } else if (result == "invalidsession") {
-        message.channel.send(
-            "Your session key is invalid! Please redo the lastFM setup process!"
-        );
-        return;
-    } else if (result == "songsignored") {
-        message.channel.send(
-            "Something went wrong while scrobbling the songs! Aborted scrobbling!"
-        );
-        return;
     }
+    var msg = [];
+    var tmpMsg = "";
+    for (var i = 0; i < scrobbleList.length; i++) {
+        if (
+            tmpMsg.length +
+                (
+                    i +
+                    ". " +
+                    scrobbleList[i].artist["#text"] +
+                    " - " +
+                    scrobbleList[i].name +
+                    "\n"
+                ).length >
+            2000
+        ) {
+            msg.push(tmpMsg);
+            tmpMsg = "";
+        }
+        tmpMsg +=
+            i +
+            1 +
+            ". " +
+            scrobbleList[i].artist["#text"] +
+            " - " +
+            scrobbleList[i].name +
+            "\n";
+    }
+    msg.push(tmpMsg);
+    message.channel.send("Scrobbles successful!\nScrobbled songs:\n");
+    for (var i = 0; i < msg.length; i++) {
+        log("Sending message: " + msg[i]);
+        await message.channel.send(msg[i]);
+    }
+    return;
 }
 
 async function updateScrobblers() {
