@@ -14,18 +14,196 @@ async function scrobbleSong(
     timestamp,
     sessionKey
 ) {
+    log(`\n\n\n\n\n`);
+    log("scrobbleSong called");
+    log(`\n\n\n\n\n`);
+
     var auth_sig = `album${album}api_key${LAST_FM_API_KEY}artist${artistName}methodtrack.scrobblesk${sessionKey}timestamp${timestamp}track${songName}${secret}`;
+    log(auth_sig);
     var auth_sig_md5Hex = md5(auth_sig);
     songName = encodeURIComponent(songName);
     album = encodeURIComponent(album);
     artistName = encodeURIComponent(artistName);
     try {
         const url = `${LAST_FM_API_BASE}?method=track.scrobble&api_key=${LAST_FM_API_KEY}&sk=${sessionKey}&artist=${artistName}&track=${songName}&album=${album}&timestamp=${timestamp}&format=json&api_sig=${auth_sig_md5Hex}`;
+        log(url);
         const response = await fetch(url, { method: "POST" });
         const data = await response.json();
         return data;
     } catch (error) {
         log(`Error from scrobbleSong: ${error}`);
+        return "error";
+    }
+}
+
+async function scrobbleSongs(
+    songNames,
+    artistNames,
+    albums,
+    timestamps,
+    sessionKey
+) {
+    log(`\n\n\n\n\n`);
+    log("scrobbleSongs called");
+    log(`songNames: ${songNames}`);
+    log(`artistNames: ${artistNames}`);
+    log(`albums: ${albums}`);
+    log(`timestamps: ${timestamps}`);
+    log(`sessionKey: ${sessionKey}`);
+    log(`\n\n\n\n\n`);
+    var auth_sig = "album[";
+    for (var i = 0; i < albums.length; i++) {
+        auth_sig += albums[i];
+        if (i != albums.length - 1) auth_sig += ",";
+        else auth_sig += "]";
+    }
+    auth_sig += `api_key${LAST_FM_API_KEY}`;
+    auth_sig += "artist[";
+    for (var i = 0; i < artistNames.length; i++) {
+        auth_sig += artistNames[i];
+        if (i != artistNames.length - 1) auth_sig += ",";
+        else auth_sig += "]";
+    }
+    auth_sig += `methodtrack.scrobblesk${sessionKey}`;
+    auth_sig += "timestamp[";
+    for (var i = 0; i < timestamps.length; i++) {
+        auth_sig += timestamps[i];
+        if (i != timestamps.length - 1) auth_sig += ",";
+        else auth_sig += "]";
+    }
+    auth_sig += "track[";
+    for (var i = 0; i < songNames.length; i++) {
+        auth_sig += songNames[i];
+        if (i != songNames.length - 1 ) auth_sig += ",";
+        else auth_sig += "]";
+    }
+    // add secret to end
+    auth_sig += secret;
+    log(auth_sig);
+    //auth_sig = encodeURI(auth_sig);
+    var auth_sig_md5Hex = md5(auth_sig);
+    log(auth_sig_md5Hex);
+    try {
+        var url = `${LAST_FM_API_BASE}?method=track.scrobble&api_key=${LAST_FM_API_KEY}&sk=${sessionKey}&artist=[${artistNames}]&track=[${songNames}]&album=[${albums}]&timestamp=[${timestamps}]&format=json&api_sig=${auth_sig_md5Hex}`;
+        //url = encodeURI(url);
+        log(url);
+        const response = await fetch(url, { method: "POST" });
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        log(`Error from scrobbleSongs: ${error}`);
+        return "error";
+    }
+}
+async function testScrobbles(
+    songNames,
+    artistNames,
+    albums,
+    timestamps,
+    sessionKey,
+    isReverse,
+    hasBracketsInMD5,
+    hasBracketsInLink,
+    ismd5Encoded,
+    isUrlEncoded
+) {
+    var msg = "";
+    msg += (`\n\n\n\n\n`);
+    msg += ("testScrobbles called\n");
+    msg += (`songNames: ${songNames}\n`);
+    msg += (`artistNames: ${artistNames}\n`);
+    msg += (`albums: ${albums}\n`);
+    msg += (`timestamps: ${timestamps}\n`);
+    msg += (`sessionKey: ${sessionKey}\n`);
+    msg += (`isReverse: ${isReverse} , hasBracketsInMD5: ${hasBracketsInMD5} , hasBracketsInLink: ${hasBracketsInLink} , ismd5Encoded: ${ismd5Encoded} , isUrlEncoded: ${isUrlEncoded}\n`);
+    if (hasBracketsInMD5) var auth_sig = "album[";
+    else var auth_sig = "album";
+    if (isReverse) {
+        for (var i = albums.length - 1; i >= 0; i--) {
+            auth_sig += albums[i];
+            if (i != 0 && hasBracketsInMD5) auth_sig += ",";
+            else if(hasBracketsInMD5) auth_sig += "]";
+        }
+    } else {
+        for (var i = 0; i < albums.length; i++) {
+            auth_sig += albums[i];
+            if (i != albums.length - 1 && hasBracketsInMD5) auth_sig += ",";
+            else if(hasBracketsInMD5) auth_sig += "]";
+        }
+    }
+    auth_sig += `api_key${LAST_FM_API_KEY}`;
+    if (hasBracketsInMD5) auth_sig += "artist[";
+    else auth_sig += "artist";
+    if (isReverse) {
+        for (var i = artistNames.length - 1; i >= 0; i--) {
+            auth_sig += artistNames[i];
+            if (i != 0 && hasBracketsInMD5) auth_sig += ",";
+            else if(hasBracketsInMD5) auth_sig += "]";
+        }
+    }
+    else {
+        for (var i = 0; i < artistNames.length; i++) {
+            auth_sig += artistNames[i];
+            if (i != artistNames.length - 1 && hasBracketsInMD5) auth_sig += ",";
+            else if(hasBracketsInMD5) auth_sig += "]";
+        }
+    }
+    auth_sig += `methodtrack.scrobblesk${sessionKey}`;
+    if (hasBracketsInMD5) auth_sig += "timestamp[";
+    else auth_sig += "timestamp";
+    if (isReverse) {
+        for (var i = timestamps.length - 1; i >= 0; i--) {
+            auth_sig += timestamps[i];
+            if (i != 0 && hasBracketsInMD5) auth_sig += ",";
+            else if(hasBracketsInMD5) auth_sig += "]";
+        }
+    }
+    else {
+        for (var i = 0; i < timestamps.length; i++) {
+            auth_sig += timestamps[i];
+            if (i != timestamps.length - 1 && hasBracketsInMD5) auth_sig += ",";
+            else if(hasBracketsInMD5) auth_sig += "]";
+        }
+    }
+    if (hasBracketsInMD5) auth_sig += "track[";
+    else auth_sig += "track";
+    if (isReverse) {
+        for (var i = songNames.length - 1; i >= 0; i--) {
+            auth_sig += songNames[i];
+            if (i != 0 && hasBracketsInMD5) auth_sig += ",";
+            else if(hasBracketsInMD5) auth_sig += "]";
+        }
+    }
+    else {
+        for (var i = 0; i < songNames.length; i++) {
+            auth_sig += songNames[i];
+            if (i != songNames.length - 1 && hasBracketsInMD5) auth_sig += ",";
+            else if(hasBracketsInMD5) auth_sig += "]";
+        }
+    }
+    auth_sig += secret;
+    msg += (`auth_sig: ${auth_sig}\n`);
+    if (ismd5Encoded) auth_sig = encodeURI(auth_sig);
+    var auth_sig_md5Hex = md5(auth_sig);
+    msg += (`auth_sig_md5Hex: ${auth_sig_md5Hex}\n`);
+    try{
+        if (hasBracketsInLink) {
+            var url = `${LAST_FM_API_BASE}?method=track.scrobble&api_key=${LAST_FM_API_KEY}&sk=${sessionKey}&artist=[${artistNames}]&track=[${songNames}]&album=[${albums}]&timestamp=[${timestamps}]&format=json&api_sig=${auth_sig_md5Hex}`;
+        } else {
+            var url = `${LAST_FM_API_BASE}?method=track.scrobble&api_key=${LAST_FM_API_KEY}&sk=${sessionKey}&artist=${artistNames}&track=${songNames}&album=${albums}&timestamp=${timestamps}&format=json&api_sig=${auth_sig_md5Hex}`;
+        }
+        if (isUrlEncoded) url = encodeURI(url);
+        msg += (`url: ${url}\n`);
+        const response = await fetch(url, { method: "POST" });
+        const data = await response.json();
+        if (data["error"] != undefined && data.error == 13) {
+            return 0;
+        } else {
+            log(msg)
+            return data;
+        }
+    } catch (error) {
+        log(`Error from testScrobbles: ${error}`);
         return "error";
     }
 }
@@ -55,63 +233,6 @@ async function updateNowPlaying(songName, artistName, album, sessionKey) {
         log(`Error from updateNowPlaying: ${error}`);
         return "error";
     }
-}
-
-async function scrobbleSongs(songs, sessionKey) {
-    var scrobbleList = [];
-    for (let index = 0; index < songs.length; index++) {
-        const song = songs[index];
-        var scrobble = {
-            artist: song.artist["#text"],
-            track: song.name,
-            album: song.album["#text"],
-            timestamp: song.date.uts,
-        };
-        scrobbleList.push(scrobble);
-    }
-    // TEMP FIX
-    for (let i = 0; i < scrobbleList.length; i++) {
-        var result = await scrobbleSong(
-            scrobbleList[i].track,
-            scrobbleList[i].artist,
-            scrobbleList[i].album,
-            scrobbleList[i].timestamp,
-            sessionKey
-        );
-        log(`Scrobble response: ${JSON.stringify(result)}`);
-        if (result === "error") {
-            log(
-                `Error scrobbling song: ${scrobbleList[i].track} by ${scrobbleList[i].artist} on ${scrobbleList[i].album} at ${scrobbleList[i].timestamp}`
-            );
-        } else if (result.error === 9) {
-            log(`Invalid session key`);
-            return "invalidsession";
-        } else if (
-            result.scrobbles["@attr"] != null &&
-            result.scrobbles["@attr"] != undefined &&
-            result.scrobbles["@attr"]["ignored"] == 1
-        ) {
-            log(
-                `Song ignored: ${scrobbleList[i].track} by ${scrobbleList[i].artist} on ${scrobbleList[i].album} at ${scrobbleList[i].timestamp}`
-            );
-            return "songsignored";
-        }
-    }
-    return true;
-    /*
-    var auth_sig = `api_key${LAST_FM_API_KEY}methodtrack.scrobblesk${sessionKey}${JSON.stringify(scrobbleList)}${secret}`;
-    var auth_sig_md5Hex = md5(auth_sig);
-    try {
-        const url = `${LAST_FM_API_BASE}?method=track.scrobble&api_key=${LAST_FM_API_KEY}&sk=${sessionKey}&format=json&api_sig=${auth_sig_md5Hex}`;
-        const response = await fetch(url, {'method': 'POST', 'body': JSON.stringify(scrobbleList)});
-        const data = await response.json();
-        log(`Scrobble response: ${JSON.stringify(data)}`);
-        return true;
-    } catch (error) {
-        log(`Error from scrobbleSongs: ${error}`);
-        return 'error';
-    }
-    */
 }
 
 function log(message) {
@@ -193,4 +314,5 @@ module.exports = {
     getRecentTracks,
     updateNowPlaying,
     scrobbleSongs,
+    testScrobbles,
 };

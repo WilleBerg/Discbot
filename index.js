@@ -45,11 +45,12 @@ const {
     scrobbleSong,
     updateNowPlaying,
     scrobbleSongs,
+    testScrobbles,
 } = require("./lastfm.js");
 
 // TODO TODO TODO TDOOD
 // CHANGE WAY OF DOING THIS PLSSS
-const DEBUGGING = false;
+const DEBUGGING = true;
 
 let timer = 0;
 let updateTimer = 0;
@@ -624,6 +625,10 @@ async function multiScrobbler(message) {
     }
     log("Session key: " + sessionKey);
     log("Scrobbling songs: ");
+    var songs = [];
+    var albums = [];
+    var artists = [];
+    var timestamps = [];
     for (var i = 0; i < scrobbleList.length; i++) {
         log(
             "Scrobbling: " +
@@ -631,8 +636,59 @@ async function multiScrobbler(message) {
                 " - " +
                 scrobbleList[i].name
         );
+        songs.push(scrobbleList[i].name);
+        albums.push(scrobbleList[i].album["#text"]);
+        artists.push(scrobbleList[i].artist["#text"]);
+        timestamps.push(scrobbleList[i].date.uts);
     }
-    var result = await scrobbleSongs(scrobbleList, sessionKey);
+    //var result1 = await scrobbleSong(songs[0], artists[0], albums[0], timestamps[0], sessionKey);
+    //log("Result: " + JSON.stringify(result1));
+
+    // create a 2d matrix with every binary combination from 0 - 31
+    var combinations = [
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1],
+        [0, 0, 0, 1, 0],
+        [0, 0, 0, 1, 1],
+        [0, 0, 1, 0, 0],
+        [0, 0, 1, 0, 1],
+        [0, 0, 1, 1, 0],
+        [0, 0, 1, 1, 1],
+        [0, 1, 0, 0, 0],
+        [0, 1, 0, 0, 1],
+        [0, 1, 0, 1, 0],
+        [0, 1, 0, 1, 1],
+        [0, 1, 1, 0, 0],
+        [0, 1, 1, 0, 1],
+        [0, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 1, 0],
+        [1, 0, 0, 1, 1],
+        [1, 0, 1, 0, 0],
+        [1, 0, 1, 0, 1],
+        [1, 0, 1, 1, 0],
+        [1, 0, 1, 1, 1],
+        [1, 1, 0, 0, 0],
+        [1, 1, 0, 0, 1],
+        [1, 1, 0, 1, 0],
+        [1, 1, 0, 1, 1],
+        [1, 1, 1, 0, 0],
+        [1, 1, 1, 0, 1],
+        [1, 1, 1, 1, 0],
+        [1, 1, 1, 1, 1],
+    ];
+    for (var i = 0; i < combinations.length; i++) {
+        var resul = await testScrobbles(songs, artists, albums, timestamps, sessionKey, combinations[i][0], combinations[i][1], combinations[i][2], combinations[i][3], combinations[i][4]);
+        if (resul == false) continue;
+        log("Result: " + JSON.stringify(resul));
+    }
+
+
+
+    var result = await scrobbleSongs(songs, artists, albums, timestamps, sessionKey);
+    log("Result: " + JSON.stringify(result));
     if (result == "error") {
         message.channel.send(
             "Something went wrong while scrobbling the songs!"
