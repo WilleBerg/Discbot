@@ -490,7 +490,7 @@ async function latestScrobbles(message) {
         //end += 1;
         var msg = "\n";
         for (var i = start; i < amount; i++) {
-            var date = new Date(tracks[i].date.uts * 1000);
+            var date = new Date(tracks[i].date.uts);
             if (
                 msg.length +
                     (
@@ -514,6 +514,8 @@ async function latestScrobbles(message) {
                 tracks[i].artist["#text"] +
                 " - " +
                 tracks[i].name +
+                " - " +
+                date.toLocaleString() +
                 "\n";
         }
         await message.channel.send(msg);
@@ -521,7 +523,7 @@ async function latestScrobbles(message) {
     }
     var msg = "\n";
     for (var i = 0; i < amount; i++) {
-        var date = new Date(tracks[i].date.uts * 1000);
+        var date = new Date(tracks[i].date.uts);
         if (
             msg.length +
                 (
@@ -546,6 +548,8 @@ async function latestScrobbles(message) {
             tracks[i].artist["#text"] +
             " - " +
             tracks[i].name +
+            " - " +
+            date.toLocaleString() +
             "\n";
     }
     await message.channel.send(msg);
