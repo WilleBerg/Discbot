@@ -2,10 +2,11 @@ const fetch = require("node-fetch");
 const md5 = require("blueimp-md5");
 const { apiKey, secret } = require("./config.json");
 const fs = require("fs");
+const { lastfmDebug } = require("./config.json");
 
 const LAST_FM_API_KEY = apiKey;
 const LAST_FM_API_BASE = "http://ws.audioscrobbler.com/2.0/";
-const DEBUGGING = true;
+const DEBUGGING = lastfmDebug;
 
 async function scrobbleSong(
     songName,
@@ -29,6 +30,7 @@ async function scrobbleSong(
         log(url);
         const response = await fetch(url, { method: "POST" });
         const data = await response.json();
+        log(JSON.stringify(data));
         return data;
     } catch (error) {
         log(`Error from scrobbleSong: ${error}`);
@@ -127,7 +129,9 @@ async function scrobbleSongs(
         const response = await fetch(url, { method: "POST" });
         const data = await response.json();
         log(msg)
-        return 1;
+        log(JSON.stringify(data));
+        if (data.error != undefined && data.error != 13) return 1;
+        else return 'error';
     } catch (error) {
         log(`Error from testScrobbles: ${error}`);
         return "error";

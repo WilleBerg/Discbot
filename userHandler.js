@@ -11,7 +11,7 @@ seperate function, but instead just call it once.
 // TODO: Add child check function
 
 const { MongoClient, ServerApiVersion } = require("mongodb");
-const { mongoUsername, mongoPassword, mongoUrl } = require("./config.json");
+const { mongoUsername, mongoPassword, mongoUrl, userHandlerDebug } = require("./config.json");
 const uri = `mongodb+srv://${mongoUsername}:${mongoPassword}@${mongoUrl}/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
     useNewUrlParser: true,
@@ -21,7 +21,7 @@ const client = new MongoClient(uri, {
 const { PythonShell } = require("python-shell");
 var fs = require("fs");
 const { spawn } = require("node:child_process");
-const DEBUGGING = false;
+const DEBUGGING = userHandlerDebug;
 
 async function connect() {
     try {

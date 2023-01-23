@@ -6,7 +6,7 @@ const ply = require("play-dl");
 
 // DISCORDJS
 const { Client, Collection, Intents, VoiceChannel } = require("discord.js");
-const { token, prefix, googleApi } = require("./config.json");
+const { token, prefix, googleApi, indexDebug, lastfmDebug, userHandlerDebug } = require("./config.json");
 const client = new Client({
     intents: [
         Intents.FLAGS.GUILDS,
@@ -50,7 +50,7 @@ const {
 
 // TODO TODO TODO TDOOD
 // CHANGE WAY OF DOING THIS PLSSS
-const DEBUGGING = false;
+const DEBUGGING = indexDebug;
 
 let timer = 0;
 let updateTimer = 0;
