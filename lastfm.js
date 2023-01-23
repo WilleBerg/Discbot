@@ -58,7 +58,7 @@ async function scrobbleSongs(
     for (var i = 0; i < albums.length; i++) {
         tmpstring += "album";
         tmpstring += `[${i}]`;
-        tmpstring += encodeURIComponent(albums[i]); 
+        tmpstring += encodeURI(albums[i]); 
         albumList.push(tmpstring);
         log(tmpstring);
         tmpstring = "";
@@ -67,7 +67,7 @@ async function scrobbleSongs(
     for (var i = 0; i < artistNames.length; i++) {
         tmpstring += "artist";
         tmpstring += `[${i}]`;
-        tmpstring += encodeURIComponent(artistNames[i]); 
+        tmpstring += encodeURI(artistNames[i]); 
         artistList.push(tmpstring);
         log(tmpstring);
         tmpstring = "";
@@ -85,7 +85,7 @@ async function scrobbleSongs(
     for (var i = 0; i < songNames.length; i++) {
         tmpstring += "track";
         tmpstring += `[${i}]`;
-        tmpstring += encodeURIComponent(songNames[i]); 
+        tmpstring += encodeURI(songNames[i]); 
         trackList.push(tmpstring);
         log(tmpstring);
         tmpstring = "";
