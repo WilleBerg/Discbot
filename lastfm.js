@@ -130,8 +130,8 @@ async function scrobbleSongs(
         const data = await response.json();
         log(msg)
         log(JSON.stringify(data));
-        if (data.error != undefined && data.error != 13) return 1;
-        else return 'error';
+        if (data.error != undefined) return 'error';
+        else return 1;
     } catch (error) {
         log(`Error from testScrobbles: ${error}`);
         return "error";
