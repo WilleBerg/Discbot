@@ -104,7 +104,7 @@ async function scrobbleSongs(
         trackString += trackList[i];
     }
     auth_sig = `${albumString}api_key${LAST_FM_API_KEY}${artistString}methodtrack.scrobblesk${sessionKey}${timestampString}${trackString}${secret}`;
-
+    auth_sig = encodeURIComponent(auth_sig);
     msg += (`auth_sig: ${auth_sig}\n`);
     var auth_sig_md5Hex = md5(auth_sig);
     msg += (`auth_sig_md5Hex: ${auth_sig_md5Hex}\n`);
