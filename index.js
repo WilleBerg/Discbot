@@ -80,7 +80,7 @@ client.once("ready", async () => {
         if (timer > 0) {
             timer -= 1000;
         } else {
-            log("Timer has expired!");
+            //log("Timer has expired!");
             //var channel = client.channels.cache.get("959114050275524728");
             updateScrobblers();
 
