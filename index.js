@@ -495,11 +495,11 @@ async function latestScrobbles(message) {
                 msg.length +
                     (
                         i +
-                        ". " +
+                        ". ***" +
                         tracks[i].artist["#text"] +
                         " - " +
                         tracks[i].name +
-                        " at " +
+                        "*** at " +
                         date.toLocaleString() +
                         "\n"
                     ).length >
@@ -510,11 +510,11 @@ async function latestScrobbles(message) {
             }
             msg +=
                 i +
-                ". " +
+                ". ***" +
                 tracks[i].artist["#text"] +
                 " - " +
                 tracks[i].name +
-                " at " +
+                "*** at " +
                 date.toLocaleString() +
                 "\n";
         }
@@ -528,11 +528,11 @@ async function latestScrobbles(message) {
             msg.length +
                 (
                     i +
-                    ". " +
+                    ". ***" +
                     tracks[i].artist["#text"] +
                     " - " +
                     tracks[i].name +
-                    " at " +
+                    "*** at " +
                     date.toLocaleString() +
                     "\n"
                 ).length >
@@ -544,11 +544,11 @@ async function latestScrobbles(message) {
         msg +=
             i +
             1 +
-            ". " +
+            ". ***" +
             tracks[i].artist["#text"] +
             " - " +
             tracks[i].name +
-            " at " +
+            "*** at " +
             date.toLocaleString() +
             "\n";
     }
