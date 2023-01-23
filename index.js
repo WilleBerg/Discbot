@@ -490,6 +490,7 @@ async function latestScrobbles(message) {
         //end += 1;
         var msg = "\n";
         for (var i = start; i < amount; i++) {
+            var date = new Date(tracks[i].date.uts * 1000);
             if (
                 msg.length +
                     (
@@ -498,6 +499,8 @@ async function latestScrobbles(message) {
                         tracks[i].artist["#text"] +
                         " - " +
                         tracks[i].name +
+                        " - " +
+                        date.toLocaleString() +
                         "\n"
                     ).length >
                 2000
@@ -518,6 +521,7 @@ async function latestScrobbles(message) {
     }
     var msg = "\n";
     for (var i = 0; i < amount; i++) {
+        var date = new Date(tracks[i].date.uts * 1000);
         if (
             msg.length +
                 (
@@ -526,6 +530,8 @@ async function latestScrobbles(message) {
                     tracks[i].artist["#text"] +
                     " - " +
                     tracks[i].name +
+                    " - " +
+                    date.toLocaleString() +
                     "\n"
                 ).length >
             2000
