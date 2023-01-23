@@ -60,6 +60,7 @@ async function scrobbleSongs(
         tmpstring += `[${i}]`;
         tmpstring += encodeURIComponent(albums[i]); 
         albumList.push(tmpstring);
+        log(tmpstring);
         tmpstring = "";
     }
     var artistList = [];
@@ -68,6 +69,7 @@ async function scrobbleSongs(
         tmpstring += `[${i}]`;
         tmpstring += encodeURIComponent(artistNames[i]); 
         artistList.push(tmpstring);
+        log(tmpstring);
         tmpstring = "";
     }
     var timestampList = [];
@@ -76,6 +78,7 @@ async function scrobbleSongs(
         tmpstring += `[${i}]`;
         tmpstring += timestamps[i]; 
         timestampList.push(tmpstring);
+        log(tmpstring);
         tmpstring = "";
     }
     var trackList = [];
@@ -84,6 +87,7 @@ async function scrobbleSongs(
         tmpstring += `[${i}]`;
         tmpstring += encodeURIComponent(songNames[i]); 
         trackList.push(tmpstring);
+        log(tmpstring);
         tmpstring = "";
     }
     var auth_sig = "";
