@@ -46,19 +46,19 @@ async function scrobbleSongs(
     sessionKey
 ) {
     var msg = "";
-    msg += (`\n\n\n\n\n`);
-    msg += ("scrobbleSongs called\n");
-    msg += (`songNames: ${songNames}\n`);
-    msg += (`artistNames: ${artistNames}\n`);
-    msg += (`albums: ${albums}\n`);
-    msg += (`timestamps: ${timestamps}\n`);
-    msg += (`sessionKey: ${sessionKey}\n`);
+    msg += `\n\n\n\n\n`;
+    msg += "scrobbleSongs called\n";
+    msg += `songNames: ${songNames}\n`;
+    msg += `artistNames: ${artistNames}\n`;
+    msg += `albums: ${albums}\n`;
+    msg += `timestamps: ${timestamps}\n`;
+    msg += `sessionKey: ${sessionKey}\n`;
     var tmpstring = "";
     var albumList = [];
     for (var i = 0; i < albums.length; i++) {
         tmpstring += "album";
         tmpstring += `[${i}]`;
-        tmpstring += encodeURI(albums[i]); 
+        tmpstring += (albums[i]);
         albumList.push(tmpstring);
         log(tmpstring);
         tmpstring = "";
@@ -67,7 +67,7 @@ async function scrobbleSongs(
     for (var i = 0; i < artistNames.length; i++) {
         tmpstring += "artist";
         tmpstring += `[${i}]`;
-        tmpstring += encodeURI(artistNames[i]); 
+        tmpstring += (artistNames[i]);
         artistList.push(tmpstring);
         log(tmpstring);
         tmpstring = "";
@@ -76,7 +76,7 @@ async function scrobbleSongs(
     for (var i = 0; i < timestamps.length; i++) {
         tmpstring += "timestamp";
         tmpstring += `[${i}]`;
-        tmpstring += timestamps[i]; 
+        tmpstring += timestamps[i];
         timestampList.push(tmpstring);
         log(tmpstring);
         tmpstring = "";
@@ -85,13 +85,13 @@ async function scrobbleSongs(
     for (var i = 0; i < songNames.length; i++) {
         tmpstring += "track";
         tmpstring += `[${i}]`;
-        tmpstring += encodeURI(songNames[i]); 
+        tmpstring += (songNames[i]);
         trackList.push(tmpstring);
         log(tmpstring);
         tmpstring = "";
     }
     var auth_sig = "";
-    albumList.sort(); 
+    albumList.sort();
     artistList.sort();
     timestampList.sort();
     trackList.sort();
@@ -100,17 +100,17 @@ async function scrobbleSongs(
     var artistString = "";
     var timestampString = "";
     var trackString = "";
-    
+
     for (var i = 0; i < albumList.length; i++) {
         albumString += albumList[i];
-        artistString+= artistList[i];
+        artistString += artistList[i];
         timestampString += timestampList[i];
         trackString += trackList[i];
     }
     auth_sig = `${albumString}api_key${LAST_FM_API_KEY}${artistString}methodtrack.scrobblesk${sessionKey}${timestampString}${trackString}${secret}`;
-    msg += (`auth_sig: ${auth_sig}\n`);
+    msg += `auth_sig: ${auth_sig}\n`;
     var auth_sig_md5Hex = md5(auth_sig);
-    msg += (`auth_sig_md5Hex: ${auth_sig_md5Hex}\n`);
+    msg += `auth_sig_md5Hex: ${auth_sig_md5Hex}\n`;
     var urlTrackString = "";
     var urlArtistString = "";
     var urlAlbumString = "";
@@ -125,15 +125,15 @@ async function scrobbleSongs(
         urlTimestampString += `timestamp[${i}]=${timestamps[i]}`;
         if (i != songNames.length - 1) urlTimestampString += "&";
     }
-    try{
+    try {
         var url = `${LAST_FM_API_BASE}?method=track.scrobble&api_key=${LAST_FM_API_KEY}&sk=${sessionKey}&${urlArtistString}&${urlTrackString}&${urlAlbumString}&${urlTimestampString}&format=json&api_sig=${auth_sig_md5Hex}`;
         url = encodeURI(url);
-        msg += (`url: ${url}\n`);
+        msg += `url: ${url}\n`;
         const response = await fetch(url, { method: "POST" });
         const data = await response.json();
-        log(msg)
+        log(msg);
         log(JSON.stringify(data));
-        if (data.error != undefined) return 'error';
+        if (data.error != undefined) return "error";
         else return 1;
     } catch (error) {
         log(`Error from testScrobbles: ${error}`);
@@ -155,14 +155,14 @@ async function testScrobbles(
     isUrlEncoded
 ) {
     var msg = "";
-    msg += (`\n\n\n\n\n`);
-    msg += ("testScrobbles called\n");
-    msg += (`songNames: ${songNames}\n`);
-    msg += (`artistNames: ${artistNames}\n`);
-    msg += (`albums: ${albums}\n`);
-    msg += (`timestamps: ${timestamps}\n`);
-    msg += (`sessionKey: ${sessionKey}\n`);
-    msg += (`isReverse: ${isReverse} , hasBracketsInMD5: ${hasBracketsInMD5} , hasBracketsInLink: ${hasBracketsInLink} , ismd5Encoded: ${ismd5Encoded} , isUrlEncoded: ${isUrlEncoded}\n`);
+    msg += `\n\n\n\n\n`;
+    msg += "testScrobbles called\n";
+    msg += `songNames: ${songNames}\n`;
+    msg += `artistNames: ${artistNames}\n`;
+    msg += `albums: ${albums}\n`;
+    msg += `timestamps: ${timestamps}\n`;
+    msg += `sessionKey: ${sessionKey}\n`;
+    msg += `isReverse: ${isReverse} , hasBracketsInMD5: ${hasBracketsInMD5} , hasBracketsInLink: ${hasBracketsInLink} , ismd5Encoded: ${ismd5Encoded} , isUrlEncoded: ${isUrlEncoded}\n`;
     if (hasBracketsInMD5) var auth_sig = "";
     else var auth_sig = "album";
     var tmpstring = "";
@@ -177,7 +177,7 @@ async function testScrobbles(
         for (var i = 0; i < albums.length; i++) {
             tmpstring += "album";
             if (hasBracketsInMD5) tmpstring += `[${i}]`;
-            tmpstring += albums[i]; 
+            tmpstring += albums[i];
             albumList.push(tmpstring);
             tmpstring = "";
         }
@@ -185,7 +185,6 @@ async function testScrobbles(
     auth_sig += tmpstring + `api_key${LAST_FM_API_KEY}`;
     tmpstring = "";
     if (hasBracketsInMD5) auth_sig += "";
-     
     else auth_sig += "artist";
     var artistList = [];
     if (isReverse) {
@@ -194,12 +193,11 @@ async function testScrobbles(
             if (hasBracketsInMD5) auth_sig += `[${i}]`;
             auth_sig += artistNames[i];
         }
-    }
-    else {
+    } else {
         for (var i = 0; i < artistNames.length; i++) {
             tmpstring += "artist";
             if (hasBracketsInMD5) tmpstring += `[${i}]`;
-            tmpstring += artistNames[i]; 
+            tmpstring += artistNames[i];
             artistList.push(tmpstring);
             tmpstring = "";
         }
@@ -215,12 +213,11 @@ async function testScrobbles(
             if (hasBracketsInMD5) auth_sig += `[${i}]`;
             auth_sig += timestamps[i];
         }
-    }
-    else {
+    } else {
         for (var i = 0; i < timestamps.length; i++) {
             tmpstring += "timestamp";
             if (hasBracketsInMD5) tmpstring += `[${i}]`;
-            tmpstring += timestamps[i]; 
+            tmpstring += timestamps[i];
             timestampList.push(tmpstring);
             tmpstring = "";
         }
@@ -236,12 +233,11 @@ async function testScrobbles(
             if (hasBracketsInMD5) auth_sig += `[${i}]`;
             auth_sig += songNames[i];
         }
-    }
-    else {
+    } else {
         for (var i = 0; i < songNames.length; i++) {
             tmpstring += "track";
             if (hasBracketsInMD5) tmpstring += `[${i}]`;
-            tmpstring += songNames[i]; 
+            tmpstring += songNames[i];
             trackList.push(tmpstring);
             tmpstring = "";
         }
@@ -249,7 +245,7 @@ async function testScrobbles(
     auth_sig += tmpstring + secret;
     auth_sig = "";
     log("albumList: " + albumList);
-    albumList.sort(); 
+    albumList.sort();
     log("albumList: " + albumList);
     artistList.sort();
     timestampList.sort();
@@ -259,26 +255,25 @@ async function testScrobbles(
     var artistString = "";
     var timestampString = "";
     var trackString = "";
-    
+
     for (var i = 0; i < albumList.length; i++) {
         albumString += albumList[i];
-        artistString+= artistList[i];
+        artistString += artistList[i];
         timestampString += timestampList[i];
         trackString += trackList[i];
     }
     auth_sig = `${albumString}api_key${LAST_FM_API_KEY}${artistString}methodtrack.scrobblesk${sessionKey}${timestampString}${trackString}${secret}`;
 
-
-    msg += (`auth_sig: ${auth_sig}\n`);
+    msg += `auth_sig: ${auth_sig}\n`;
     if (ismd5Encoded) auth_sig = encodeURI(auth_sig);
     var auth_sig_md5Hex = md5(auth_sig);
-    msg += (`auth_sig_md5Hex: ${auth_sig_md5Hex}\n`);
+    msg += `auth_sig_md5Hex: ${auth_sig_md5Hex}\n`;
     var urlTrackString = "";
     var urlArtistString = "";
     var urlAlbumString = "";
     var urlTimestampString = "";
     if (hasBracketsInLink) {
-        if(isReverse) {
+        if (isReverse) {
             for (var i = songNames.length - 1; i >= 0; i--) {
                 urlTrackString += `track[${i}]=${songNames[i]}`;
                 if (i != 0) urlTrackString += "&";
@@ -307,14 +302,14 @@ async function testScrobbles(
         urlAlbumString = `album=${albums}`;
         urlTimestampString = `timestamp=${timestamps}`;
     }
-    try{
+    try {
         if (hasBracketsInLink) {
             var url = `${LAST_FM_API_BASE}?method=track.scrobble&api_key=${LAST_FM_API_KEY}&sk=${sessionKey}&${urlArtistString}&${urlTrackString}&${urlAlbumString}&${urlTimestampString}&format=json&api_sig=${auth_sig_md5Hex}`;
         } else {
             var url = `${LAST_FM_API_BASE}?method=track.scrobble&api_key=${LAST_FM_API_KEY}&sk=${sessionKey}&artist=${artistNames}&track=${songNames}&album=${albums}&timestamp=${timestamps}&format=json&api_sig=${auth_sig_md5Hex}`;
         }
         if (isUrlEncoded) url = encodeURI(url);
-        msg += (`url: ${url}\n`);
+        msg += `url: ${url}\n`;
         const response = await fetch(url, { method: "POST" });
         const data = await response.json();
         log(msg);

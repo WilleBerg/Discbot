@@ -14,11 +14,13 @@ LAST_FM_API_KEY = configObj["apiKey"]  #Get from config.json, but first get a ke
 LAST_FM_API_BASE = "http://ws.audioscrobbler.com/2.0/"
 
 def getTokenSignature():
+    """Returns the signature for the getToken request"""
     signatureString = "api_key" + LAST_FM_API_KEY + "methodauth.getToken" + configObj["secret"]
     md5String = hashlib.md5(signatureString.encode('utf-8')).hexdigest()
     return md5String
 
 def getToken():
+    """Returns the token for the user"""
     signature = getTokenSignature()
     url = "%s?method=auth.getToken&api_key=%s&api_sig=%s&format=json" % (LAST_FM_API_BASE, LAST_FM_API_KEY, signature)
     resp = requests.get(url)
@@ -30,6 +32,11 @@ def getToken():
     return respContent["token"]
 
 def getUserPermissionLink(token):
+    """Returns the link to the user permission page
+    
+    Keyword arguments: 
+    token -- The token for the user
+    """
     return "http://www.last.fm/api/auth/?api_key=%s&token=%s" % (LAST_FM_API_KEY, token)
 
 def main():
