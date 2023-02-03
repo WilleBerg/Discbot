@@ -19,13 +19,13 @@ def setupLogs():
     
     if (not os.path.exists(cwd + LOG_DIR + "/databaseLog.log")):
         print("Created database log file")
-        logFiles = open(cwd + LOG_DIR + "/databaseLog.log", "w")
-        logFiles.close()
+        log_files = open(cwd + LOG_DIR + "/databaseLog.log", "w")
+        log_files.close()
 
     if (not os.path.exists(cwd + LOG_DIR + "/log.log")):
         print("Created log file")
-        logFiles = open(cwd + LOG_DIR + "/log.log", "w")
-        logFiles.close()
+        log_files = open(cwd + LOG_DIR + "/log.log", "w")
+        log_files.close()
 
     if(not os.path.exists(cwd + SCRIPT_LOG_DIR)):
         os.mkdir(cwd + SCRIPT_LOG_DIR)
@@ -33,18 +33,18 @@ def setupLogs():
 
     if (not os.path.exists(cwd + SCRIPT_LOG_DIR + "/createAccessLinkLog.log")):
         print("Created createAccessLinkLog file")
-        logFiles = open(cwd + SCRIPT_LOG_DIR + "/createAccessLinkLog.log", "w")
-        logFiles.close()
+        log_files = open(cwd + SCRIPT_LOG_DIR + "/createAccessLinkLog.log", "w")
+        log_files.close()
 
     if (not os.path.exists(cwd + SCRIPT_LOG_DIR + "/lfmdsLog.log")):
         print("Created lfmdsLog file")
-        logFiles = open(cwd + SCRIPT_LOG_DIR + "/lfmdsLog.log", "w")
-        logFiles.close()
+        log_files = open(cwd + SCRIPT_LOG_DIR + "/lfmdsLog.log", "w")
+        log_files.close()
 
     if (not os.path.exists(cwd + SCRIPT_LOG_DIR + "/pastLog.log")):
         print("Created pastLog file")
-        logFiles = open(cwd + SCRIPT_LOG_DIR + "/pastLog.log", "w")
-        logFiles.close()
+        log_files = open(cwd + SCRIPT_LOG_DIR + "/pastLog.log", "w")
+        log_files.close()
 
     print("Log setup complete")
 
