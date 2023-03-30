@@ -23,7 +23,9 @@ Here are a few of the most notable features of the bot:
 
 * Search up a persons match history in the game [League of Legends](https://www.leagueoflegends.com/en-us/), using the Riot Games API.[```/summoner "username"```]
 
-![til](./gifs/summonergif.gif)
+    - Example
+
+    ![til](./gifs/summonergif.gif)
 
 * And a few more minor features!
 
