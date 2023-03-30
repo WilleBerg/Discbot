@@ -44,4 +44,4 @@ def main():
     print(token)
     print(getUserPermissionLink(token))
 
-main()
+main() 
