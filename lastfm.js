@@ -58,7 +58,7 @@ async function scrobbleSongs(
     for (var i = 0; i < albums.length; i++) {
         tmpstring += "album";
         tmpstring += `[${i}]`;
-        tmpstring += (encodeURI(albums[i]));
+        tmpstring += (changeToUtf8(encodeURI(albums[i])));
         albumList.push(tmpstring);
         log(tmpstring);
         tmpstring = "";
@@ -67,7 +67,7 @@ async function scrobbleSongs(
     for (var i = 0; i < artistNames.length; i++) {
         tmpstring += "artist";
         tmpstring += `[${i}]`;
-        tmpstring += (encodeURI(artistNames[i]));
+        tmpstring += (changeToUtf8(encodeURI(artistNames[i])));
         artistList.push(tmpstring);
         log(tmpstring);
         tmpstring = "";
@@ -85,7 +85,7 @@ async function scrobbleSongs(
     for (var i = 0; i < songNames.length; i++) {
         tmpstring += "track";
         tmpstring += `[${i}]`;
-        tmpstring += (encodeURI(songNames[i]));
+        tmpstring += (changeToUtf8(encodeURI(songNames[i])));
         trackList.push(tmpstring);
         log(tmpstring);
         tmpstring = "";
@@ -128,11 +128,11 @@ async function scrobbleSongs(
     //     if (i != songNames.length - 1) urlTimestampString += "&";
     // }
     for (var i = 0; i < songNames.length; i++) {
-        urlTrackString += `track[${i}]=${encodeURI(songNames[i])}`;
+        urlTrackString += `track[${i}]=${changeToUtf8(encodeURI(songNames[i]))}`;
         if (i != songNames.length - 1) urlTrackString += "&";
-        urlArtistString += `artist[${i}]=${encodeURI(artistNames[i])}`;
+        urlArtistString += `artist[${i}]=${changeToUtf8(encodeURI(artistNames[i]))}`;
         if (i != songNames.length - 1) urlArtistString += "&";
-        urlAlbumString += `album[${i}]=${encodeURI(albums[i])}`;
+        urlAlbumString += `album[${i}]=${changeToUtf8(encodeURI(albums[i]))}`;
         if (i != songNames.length - 1) urlAlbumString += "&";
         urlTimestampString += `timestamp[${i}]=${timestamps[i]}`;
         if (i != songNames.length - 1) urlTimestampString += "&";
