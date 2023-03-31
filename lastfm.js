@@ -102,10 +102,10 @@ async function scrobbleSongs(
     var trackString = "";
 
     for (var i = 0; i < albumList.length; i++) {
-        albumString += encodeURIComponent(albumList[i]);
-        artistString += encodeURIComponent(artistList[i]);
-        timestampString += encodeURIComponent(timestampList[i]);
-        trackString += encodeURIComponent(trackList[i]);
+        albumString += albumList[i];
+        artistString += artistList[i];
+        timestampString += timestampList[i];
+        trackString += trackList[i];
     }
     auth_sig = `${albumString}api_key${LAST_FM_API_KEY}${artistString}methodtrack.scrobblesk${sessionKey}${timestampString}${trackString}${secret}`;
     msg += `auth_sig: ${auth_sig}\n`;
@@ -151,6 +151,9 @@ function changeToUtf8(s) {
         }
         if (s[i] === '#') {
             returnString = s.replace('#', '%23');
+        }
+        if (s[i] === 'â') {
+            returnString = s.replace('â', '%C3%A2');
         }
     }
     return returnString;
