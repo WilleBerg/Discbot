@@ -129,7 +129,7 @@ async function scrobbleSongs(
     }
     try {
         var url = `${LAST_FM_API_BASE}?method=track.scrobble&api_key=${LAST_FM_API_KEY}&sk=${sessionKey}&${urlArtistString}&${urlTrackString}&${urlAlbumString}&${urlTimestampString}&format=json&api_sig=${auth_sig_md5Hex}`;
-        // url = encodeURI(url);
+        url = encodeURI(url);
         msg += `url: ${url}\n`;
         const response = await fetch(url, { method: "POST" });
         const data = await response.json();
