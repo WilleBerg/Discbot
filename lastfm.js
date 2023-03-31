@@ -109,6 +109,7 @@ async function scrobbleSongs(
     }
     auth_sig = `${albumString}api_key${LAST_FM_API_KEY}${artistString}methodtrack.scrobblesk${sessionKey}${timestampString}${trackString}${secret}`;
     msg += `auth_sig: ${auth_sig}\n`;
+    auth_sig = changeToUtf8(auth_sig);
     var auth_sig_md5Hex = md5(auth_sig);
     msg += `auth_sig_md5Hex: ${auth_sig_md5Hex}\n`;
     var urlTrackString = "";
@@ -139,6 +140,19 @@ async function scrobbleSongs(
         log(`Error from testScrobbles: ${error}`);
         return "error";
     }
+}
+
+function changeToUtf8(s) {
+    let returnString = s;
+    for(var i = 0; i < s.length; i++) {
+        if (s[i] === '&') {
+            returnString = s.replace('&', '%26');
+        }
+        if (s[i] === '#') {
+            returnString = s.replace('#', '%23');
+        }
+    }
+    return returnString;
 }
 
 // Will stay as a memory of the time I spent trying to figure out how to scrobble a batch of songs
