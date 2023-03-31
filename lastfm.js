@@ -152,6 +152,18 @@ function changeToUtf8(s) {
         if (s[i] === '#') {
             returnString = s.replace('#', '%23');
         }
+        if (s[i] === '+') {
+            returnString = s.replace('+', '%2B');
+        }
+        if (s[i] === '(') {
+            returnString = s.replace('(', '%28');
+        }
+        if (s[i] === ')') {
+            returnString = s.replace(')', '%29');
+        }
+        if (s[i] === '!') {
+            returnString = s.replace('!', '%21');
+        }
     }
     return returnString;
 }
