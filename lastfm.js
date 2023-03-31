@@ -122,7 +122,7 @@ async function scrobbleSongs(
         if (i != songNames.length - 1) urlTrackString += "&";
         urlArtistString += `artist[${i}]=${artistNames[i]}`;
         if (i != songNames.length - 1) urlArtistString += "&";
-        urlAlbumString += `album[${i}]=${albums[i]}`;
+        urlAlbumString += `album[${i}]=${changeToUtf8(albums[i])}`;
         if (i != songNames.length - 1) urlAlbumString += "&";
         urlTimestampString += `timestamp[${i}]=${timestamps[i]}`;
         if (i != songNames.length - 1) urlTimestampString += "&";
