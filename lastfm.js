@@ -58,7 +58,7 @@ async function scrobbleSongs(
     for (var i = 0; i < albums.length; i++) {
         tmpstring += "album";
         tmpstring += `[${i}]`;
-        tmpstring += (albums[i]);
+        tmpstring += changeToUtf8(albums[i]);
         albumList.push(tmpstring);
         log(tmpstring);
         tmpstring = "";
@@ -67,7 +67,7 @@ async function scrobbleSongs(
     for (var i = 0; i < artistNames.length; i++) {
         tmpstring += "artist";
         tmpstring += `[${i}]`;
-        tmpstring += (artistNames[i]);
+        tmpstring += changeToUtf8(artistNames[i]);
         artistList.push(tmpstring);
         log(tmpstring);
         tmpstring = "";
@@ -85,7 +85,7 @@ async function scrobbleSongs(
     for (var i = 0; i < songNames.length; i++) {
         tmpstring += "track";
         tmpstring += `[${i}]`;
-        tmpstring += (songNames[i]);
+        tmpstring += changeToUtf8(songNames[i]);
         trackList.push(tmpstring);
         log(tmpstring);
         tmpstring = "";
@@ -109,7 +109,7 @@ async function scrobbleSongs(
     }
     auth_sig = `${albumString}api_key${LAST_FM_API_KEY}${artistString}methodtrack.scrobblesk${sessionKey}${timestampString}${trackString}${secret}`;
     msg += `auth_sig: ${auth_sig}\n`;
-    auth_sig = changeToUtf8(auth_sig);
+    // auth_sig = changeToUtf8(auth_sig);
     msg += `auth_sig post utf8 fix: ${auth_sig}\n`;
     var auth_sig_md5Hex = md5(auth_sig);
     msg += `auth_sig_md5Hex: ${auth_sig_md5Hex}\n`;
