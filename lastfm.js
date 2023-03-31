@@ -147,10 +147,10 @@ function changeToUtf8(s) {
     let returnString = s;
     for(var i = 0; i < s.length; i++) {
         if (s[i] === '&') {
-            returnString = s.replace('&', '%26');
+            returnString = s.replace('&', '');
         }
         if (s[i] === '#') {
-            returnString = s.replace('#', '%23');
+            returnString = s.replace('#', '');
         }
     }
     return returnString;
