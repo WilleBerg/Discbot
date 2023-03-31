@@ -118,9 +118,9 @@ async function scrobbleSongs(
     var urlAlbumString = "";
     var urlTimestampString = "";
     for (var i = 0; i < songNames.length; i++) {
-        urlTrackString += `track[${i}]=${songNames[i]}`;
+        urlTrackString += `track[${i}]=${changeToUtf8(songNames[i])}`;
         if (i != songNames.length - 1) urlTrackString += "&";
-        urlArtistString += `artist[${i}]=${artistNames[i]}`;
+        urlArtistString += `artist[${i}]=${changeToUtf8(artistNames[i])}`;
         if (i != songNames.length - 1) urlArtistString += "&";
         urlAlbumString += `album[${i}]=${changeToUtf8(albums[i])}`;
         if (i != songNames.length - 1) urlAlbumString += "&";
@@ -147,10 +147,10 @@ function changeToUtf8(s) {
     let returnString = s;
     for(var i = 0; i < s.length; i++) {
         if (s[i] === '&') {
-            returnString = s.replace('&', '');
+            returnString = s.replace('&', '%26');
         }
         if (s[i] === '#') {
-            returnString = s.replace('#', '');
+            returnString = s.replace('#', '%23');
         }
     }
     return returnString;
