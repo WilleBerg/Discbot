@@ -58,7 +58,7 @@ async function scrobbleSongs(
     for (var i = 0; i < albums.length; i++) {
         tmpstring += "album";
         tmpstring += `[${i}]`;
-        tmpstring += (changeToUtf8(encodeURI(albums[i])));
+        tmpstring += (albums[i]);
         albumList.push(tmpstring);
         log(tmpstring);
         tmpstring = "";
@@ -67,7 +67,7 @@ async function scrobbleSongs(
     for (var i = 0; i < artistNames.length; i++) {
         tmpstring += "artist";
         tmpstring += `[${i}]`;
-        tmpstring += (changeToUtf8(encodeURI(artistNames[i])));
+        tmpstring += (artistNames[i]);
         artistList.push(tmpstring);
         log(tmpstring);
         tmpstring = "";
@@ -85,7 +85,7 @@ async function scrobbleSongs(
     for (var i = 0; i < songNames.length; i++) {
         tmpstring += "track";
         tmpstring += `[${i}]`;
-        tmpstring += (changeToUtf8(encodeURI(songNames[i])));
+        tmpstring += (songNames[i]);
         trackList.push(tmpstring);
         log(tmpstring);
         tmpstring = "";
@@ -109,7 +109,7 @@ async function scrobbleSongs(
     }
     auth_sig = `${albumString}api_key${LAST_FM_API_KEY}${artistString}methodtrack.scrobblesk${sessionKey}${timestampString}${trackString}${secret}`;
     msg += `auth_sig: ${auth_sig}\n`;
-    // auth_sig = changeToUtf8(auth_sig);
+    auth_sig = changeToUtf8(auth_sig);
     msg += `auth_sig post utf8 fix: ${auth_sig}\n`;
     var auth_sig_md5Hex = md5(auth_sig);
     msg += `auth_sig_md5Hex: ${auth_sig_md5Hex}\n`;
@@ -117,29 +117,19 @@ async function scrobbleSongs(
     var urlArtistString = "";
     var urlAlbumString = "";
     var urlTimestampString = "";
-    // for (var i = 0; i < songNames.length; i++) {
-    //     urlTrackString += `track[${i}]=${changeToUtf8(songNames[i])}`;
-    //     if (i != songNames.length - 1) urlTrackString += "&";
-    //     urlArtistString += `artist[${i}]=${changeToUtf8(artistNames[i])}`;
-    //     if (i != songNames.length - 1) urlArtistString += "&";
-    //     urlAlbumString += `album[${i}]=${changeToUtf8(albums[i])}`;
-    //     if (i != songNames.length - 1) urlAlbumString += "&";
-    //     urlTimestampString += `timestamp[${i}]=${timestamps[i]}`;
-    //     if (i != songNames.length - 1) urlTimestampString += "&";
-    // }
     for (var i = 0; i < songNames.length; i++) {
-        urlTrackString += `track[${i}]=${changeToUtf8(encodeURI(songNames[i]))}`;
+        urlTrackString += `track[${i}]=${changeToUtf8(songNames[i])}`;
         if (i != songNames.length - 1) urlTrackString += "&";
-        urlArtistString += `artist[${i}]=${changeToUtf8(encodeURI(artistNames[i]))}`;
+        urlArtistString += `artist[${i}]=${changeToUtf8(artistNames[i])}`;
         if (i != songNames.length - 1) urlArtistString += "&";
-        urlAlbumString += `album[${i}]=${changeToUtf8(encodeURI(albums[i]))}`;
+        urlAlbumString += `album[${i}]=${changeToUtf8(albums[i])}`;
         if (i != songNames.length - 1) urlAlbumString += "&";
         urlTimestampString += `timestamp[${i}]=${timestamps[i]}`;
         if (i != songNames.length - 1) urlTimestampString += "&";
     }
     try {
         var url = `${LAST_FM_API_BASE}?method=track.scrobble&api_key=${LAST_FM_API_KEY}&sk=${sessionKey}&${urlArtistString}&${urlTrackString}&${urlAlbumString}&${urlTimestampString}&format=json&api_sig=${auth_sig_md5Hex}`;
-        // url = encodeURI(url);
+        url = encodeURI(url);
         msg += `url: ${url}\n`;
         const response = await fetch(url, { method: "POST" });
         const data = await response.json();
@@ -161,18 +151,6 @@ function changeToUtf8(s) {
         }
         if (s[i] === '#') {
             returnString = s.replace('#', '%23');
-        }
-        if (s[i] === '+') {
-            returnString = s.replace('+', '%2B');
-        }
-        if (s[i] === '(') {
-            returnString = s.replace('(', '%28');
-        }
-        if (s[i] === ')') {
-            returnString = s.replace(')', '%29');
-        }
-        if (s[i] === '!') {
-            returnString = s.replace('!', '%21');
         }
     }
     return returnString;
