@@ -750,6 +750,7 @@ async function multiScrobbler(message) {
     var msg = [];
     var tmpMsg = "";
     for (var i = 0; i < scrobbleList.length; i++) {
+        var date = new Date(tracks[i].date.uts * 1000);
         if (
             tmpMsg.length +
                 (
@@ -768,7 +769,7 @@ async function multiScrobbler(message) {
             tmpMsg = "";
         }
         tmpMsg +=
-          i +
+          i + 1 +
           ". ***" +
           scrobbleList[i].artist["#text"] +
           " - " +
