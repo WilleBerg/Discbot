@@ -1,12 +1,26 @@
 // PACKAGES
-const fs = require("fs");
-const fetch = require("node-fetch");
-const ytdl = require("ytdl-core");
-const ply = require("play-dl");
+// const fs = require("fs");
+// const fetch = require("node-fetch");
+// const ytdl = require("ytdl-core");
+// const ply = require("play-dl");
+import fs from "fs";
+import fetch from "node-fetch";
+import ytdl from "ytdl-core";
+import ply from "play-dl";
 
 // DISCORDJS
-const { Client, Collection, Intents, VoiceChannel } = require("discord.js");
-const { token, prefix, googleApi, indexDebug, lastfmDebug, userHandlerDebug } = require("./config.json");
+// const { Client, Collection, Intents, VoiceChannel } = require("discord.js");
+// const { token, prefix, googleApi, indexDebug, lastfmDebug, userHandlerDebug } = require("./config.json");
+import { Client, Collection, Intents, VoiceChannel } from "discord.js";
+// import { token, prefix, googleApi, indexDebug, lastfmDebug, userHandlerDebug } from "./config.json" assert { type: "json" };
+import config_obj from "./config.json" assert { type: "json" };
+var token = config_obj.token;
+var prefix = config_obj.prefix;
+var googleApi = config_obj.googleApi;
+var indexDebug = config_obj.indexDebug;
+var lastfmDebug = config_obj.lastfmDebug;
+var userHandlerDebug = config_obj.userHandlerDebug;
+
 const client = new Client({
     intents: [
         Intents.FLAGS.GUILDS,
@@ -20,18 +34,47 @@ const client = new Client({
     partials: ["CHANNEL"],
 });
 
-const {
+// const {
+//     AudioPlayerStatus,
+//     StreamType,
+//     createAudioPlayer,
+//     createAudioResource,
+//     joinVoiceChannel,
+// } = require("@discordjs/voice");
+//
+//
+
+import {
     AudioPlayerStatus,
     StreamType,
     createAudioPlayer,
     createAudioResource,
     joinVoiceChannel,
-} = require("@discordjs/voice");
+} from '@discordjs/voice'
 
 // IMPORTED FUNCTIONS
-const { getNextScheduleEvent, getNextTime } = require("./scheduleMessage");
-const { sendBoop, boop } = require("./welcomeMessage");
-const {
+// const { getNextScheduleEvent, getNextTime } = require("./scheduleMessage");
+// const { sendBoop, boop } = require("./welcomeMessage");
+// const {
+//     checkUser,
+//     registerUser,
+//     connect,
+//     close,
+//     userAllowAccess,
+//     setSessionKey,
+//     getSessionKey,
+// } = require("./userHandler.js");
+// const {
+//     getRecentTracks,
+//     scrobbleSong,
+//     updateNowPlaying,
+//     scrobbleSongs,
+//     testScrobbles,
+// } = require("./lastfm.js");
+//
+// import { getNextScheduleEvent, getNextTime } from "./scheduleMessage.js";
+import { sendBoop, boop } from "./welcomeMessage.js";
+import {
     checkUser,
     registerUser,
     connect,
@@ -39,14 +82,14 @@ const {
     userAllowAccess,
     setSessionKey,
     getSessionKey,
-} = require("./userHandler.js");
-const {
+} from "./userHandler.js";
+import {
     getRecentTracks,
     scrobbleSong,
     updateNowPlaying,
     scrobbleSongs,
     testScrobbles,
-} = require("./lastfm.js");
+} from './lastfm.js';
 
 // TODO TODO TODO TDOOD
 // CHANGE WAY OF DOING THIS PLSSS
@@ -58,14 +101,28 @@ var sendMessage = false;
 
 client.commands = new Collection();
 
-const commandFiles = fs
-    .readdirSync("./commands")
-    .filter((file) => file.endsWith(".js"));
-
-for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
-    client.commands.set(command.data.name, command);
-}
+// const commandFiles = fs
+//     .readdirSync("./commands")
+//     .filter((file) => file.endsWith(".js"));
+//
+// for (const file of commandFiles) {
+//     const command = require(`./commands/${file}`);
+//
+//     client.commands.set(command.data.name, command);
+// }
+//
+// import pings from './commands/pings.js'
+// client.commands.set(pings.data.name, pings);
+// // import command2 from './commands/schedule.js';
+// // client.commands.set(command2.data.name, command1);
+// import server from './commands/server.js'
+// client.commands.set(server.data.name, server);
+// import summoner from './commands/summoner.js'
+// client.commands.set(summoner.data.name, summoner);
+// import urban from './commands/urban.js'
+// client.commands.set(urban.data.name, urban);
+// import user from './commands/user.js'
+// client.commands.set(user.data.name, user);
 
 const queue = new Map();
 var scrobblers = [];
@@ -1329,4 +1386,6 @@ function alwaysLog(message) {
 
 client.login(token);
 
-module.exports = { log, alwaysLog, DEBUGGING };
+export = { log, 
+  alwaysLog, 
+  DEBUGGING };

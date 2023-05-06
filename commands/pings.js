@@ -1,6 +1,7 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+// const { SlashCommandBuilder } = require("@discordjs/builders");
+import { SlashCommandBuilder } from '@discordjs/builders';
 
-module.exports = {
+export const pings = () => {
     data: new SlashCommandBuilder()
         .setName("ping")
         .setDescription("Replies with Pong!"),

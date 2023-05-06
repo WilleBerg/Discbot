@@ -1,6 +1,7 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+// const { SlashCommandBuilder } = require("@discordjs/builders");
+import { SlashCommandBuilder } from '@discordjs/builders';
 
-module.exports = {
+export const user = {
     data: new SlashCommandBuilder()
         .setName("user")
         .setDescription("Replies with user info!"),

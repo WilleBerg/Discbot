@@ -10,17 +10,25 @@ seperate function, but instead just call it once.
 
 // TODO: Add child check function
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
-const { mongoUsername, mongoPassword, mongoUrl, userHandlerDebug } = require("./config.json");
+// const { MongoClient, ServerApiVersion } = require("mongodb");
+import { MongoClient, ServerApiVersion } from 'mongodb';
+// const { mongoUsername, mongoPassword, mongoUrl, userHandlerDebug } = require("./config.json");
+import config from './config.json' assert { type: "json" };
+var mongoUsername = config.mongoUsername;
+var mongoPassword = config.mongoPassword;
+var mongoUrl = config.mongoUrl;
+var userHandlerDebug = config.userHandlerDebug;
+
 const uri = `mongodb+srv://${mongoUsername}:${mongoPassword}@${mongoUrl}/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     serverApi: ServerApiVersion.v1,
 });
-const { PythonShell } = require("python-shell");
-var fs = require("fs");
-const { spawn } = require("node:child_process");
+// const { PythonShell } = require("python-shell");
+import { PythonShell } from 'python-shell';
+// var fs = require("fs");
+import fs from 'fs';
 const DEBUGGING = userHandlerDebug;
 
 async function connect() {
@@ -334,7 +342,8 @@ function alwaysLog(message) {
         alwaysLog("Error writing to log file");
     }
 }
-module.exports = {
+
+export {
     checkUser,
     registerUser,
     hasSessionKey,
@@ -344,3 +353,4 @@ module.exports = {
     userAllowAccess,
     getSessionKey,
 };
+

@@ -1,7 +1,9 @@
-const fetch = require("node-fetch");
-const { SlashCommandBuilder } = require("@discordjs/builders");
+// const fetch = require("node-fetch");
+import fetch from 'node-fetch';
+// const { SlashCommandBuilder } = require("@discordjs/builders");
+import { SlashCommandBuilder } from '@discordjs/builders';
 
-module.exports = {
+export const urban = {
     data: new SlashCommandBuilder()
         .setName("urban")
         .setDescription("Replies with urban definition!")

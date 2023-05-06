@@ -1,10 +1,17 @@
-const fetch = require("node-fetch");
-const { SlashCommandBuilder } = require("@discordjs/builders");
-const { GuildEmoji, MessageEmbed } = require("discord.js");
-const { currentDirectory } = require("./commandConfig.json");
-const { riotApiKey } = require(`${currentDirectory}/config.json`);
+// const fetch = require("node-fetch");
+import fetch from 'node-fetch';
+// const { SlashCommandBuilder } = require("@discordjs/builders");
+import { SlashCommandBuilder } from '@discordjs/builders';
+// const { GuildEmoji, MessageEmbed } = require("discord.js");
+import { GuildEmoji, MessageEmbed } from 'discord.js';
+// const { currentDirectory } = require("./commandConfig.json");
+// import commandConfig from './commandConfig.json' assert { type: "json" };
+// var currentDirectory = commandConfig.currentDirectory;
+// const { riotApiKey } = require(`${currentDirectory}/config.json`);
+import config from './config.json' assert { type: "json" };
+var riotApiKey = config.riotApiKey;
 
-module.exports = {
+export const summoner = {
     data: new SlashCommandBuilder()
         .setName("summoner")
         .setDescription("Replies with name, level and latest game stats!")

@@ -1,10 +1,17 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
-const { MessageEmbed } = require("discord.js");
-const { currentDirectory } = require("./commandConfig.json");
-const schedule = require(`${currentDirectory}/schedules/schedule.json`);
-const scheduleTypes = require(`${currentDirectory}/schedules/scheduleTypes.json`);
+// const { SlashCommandBuilder } = require("@discordjs/builders");
+import { SlashCommandBuilder } from '@discordjs/builders';
+// const { MessageEmbed } = require("discord.js");
+import { MessageEmbed } from 'discord.js';
+// const { currentDirectory } = require("./commandConfig.json");
+import commandConfig from './commandConfig.json' assert { type: "json" };
+var currentDirectory = commandConfig.currentDirectory;
+// const schedule = require(`${currentDirectory}/schedules/schedule.json`);
+import schedule from `${currentDirectory}/schedules/schedule.json` assert { type: "json" };
+// const scheduleTypes = require(`${currentDirectory}/schedules/scheduleTypes.json`);
+import scheduleTypes from `${currentDirectory}/schedules/scheduleTypes.json` assert { type: "json" };
 
-module.exports = {
+
+export const schedule = {
     data: new SlashCommandBuilder()
         .setName("schedule")
         .setDescription("Replies with schedule!")

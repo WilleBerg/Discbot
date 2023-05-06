@@ -1,8 +1,16 @@
-const fetch = require("node-fetch");
-const md5 = require("blueimp-md5");
-const { apiKey, secret } = require("./config.json");
-const fs = require("fs");
-const { lastfmDebug } = require("./config.json");
+// const fetch = require("node-fetch");
+import fetch from 'node-fetch';
+// const md5 = require("blueimp-md5");
+import md5 from 'blueimp-md5';
+// const { apiKey, secret } = require("./config.json");
+// import { apiKey, secret } from './config.json';
+// const fs = require("fs");
+import fs from 'fs';
+// const { lastfmDebug } = require("./config.json");
+import config from './config.json' assert { type: "json" };
+var lastfmDebug = config.lastfmDebug;
+var apiKey = config.apiKey;
+var secret = config.secret;
 
 const LAST_FM_API_KEY = apiKey;
 const LAST_FM_API_BASE = "http://ws.audioscrobbler.com/2.0/";
@@ -445,7 +453,15 @@ function convertErrorCode(errorCode) {
             return "Unknown error";
     }
 }
-module.exports = {
+// module.exports = {
+//     scrobbleSong,
+//     getRecentTracks,
+//     updateNowPlaying,
+//     scrobbleSongs,
+//     testScrobbles,
+// };
+
+export {
     scrobbleSong,
     getRecentTracks,
     updateNowPlaying,

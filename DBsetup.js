@@ -1,5 +1,12 @@
-const { MongoClient, ServerApiVersion } = require("mongodb");
-var { mongoUsername, mongoPassword, mongoUrl } = require("./config.json");
+// const { MongoClient, ServerApiVersion } = require("mongodb");
+import { MongoClient, ServerApiVersion } from 'mongodb';
+// var { mongoUsername, mongoPassword, mongoUrl } = require("./config.json");
+import config from './config.json' assert { type: "json" };
+
+var mongoUsername = config.mongoUsername;
+var mongoPassword = config.mongoPassword;
+var mongoUrl = config.mongoUrl;
+
 var monogDBuri = `mongodb+srv://${mongoUsername}:${mongoPassword}@${mongoUrl}/?retryWrites=true&w=majority`;
 console.log(monogDBuri);
 const client = new MongoClient(monogDBuri, {

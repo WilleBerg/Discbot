@@ -1,15 +1,10 @@
-const {
-    findAssumedWord,
-    findByDate,
-    findStartDateByBinarySearch,
-    compareTime,
-    findByType,
-    getPrefix,
-} = require("./commands/schedule");
-const { currentDirectory } = require("./commands/commandConfig.json");
-const schedule = require(`${currentDirectory}/schedules/schedule.json`);
-const scheduleTypes = require(`${currentDirectory}/schedules/scheduleTypes.json`);
-const { MessageEmbed } = require("discord.js");
+// const { currentDirectory } = require("./commands/commandConfig.json");
+// import { currentDirectory } from './commands/commandConfig.json';
+// const schedule = require(`${currentDirectory}/schedules/schedule.json`);
+
+// const scheduleTypes = require(`${currentDirectory}/schedules/scheduleTypes.json`);
+// const { MessageEmbed } = require("discord.js");
+import { MessageEmbed } from 'discord.js';
 
 let currentEventIndex = 0;
 var firstTime = true;
