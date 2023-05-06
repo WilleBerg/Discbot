@@ -750,15 +750,18 @@ async function multiScrobbler(message) {
     var msg = [];
     var tmpMsg = "";
     for (var i = 0; i < scrobbleList.length; i++) {
+        var date = new Date(tracks[i].date.uts * 1000);
         if (
             tmpMsg.length +
                 (
-                    i +
-                    ". " +
-                    scrobbleList[i].artist["#text"] +
-                    " - " +
-                    scrobbleList[i].name +
-                    "\n"
+                  i +
+                  ". ***" +
+                  scrobbleList[i].artist["#text"] +
+                  " - " +
+                  scrobbleList[i].name +
+                  "*** at " +
+                  date.toLocaleString() +
+                  "\n"
                 ).length >
             2000
         ) {
@@ -766,13 +769,14 @@ async function multiScrobbler(message) {
             tmpMsg = "";
         }
         tmpMsg +=
-            i +
-            1 +
-            ". " +
-            scrobbleList[i].artist["#text"] +
-            " - " +
-            scrobbleList[i].name +
-            "\n";
+          i + 1 +
+          ". ***" +
+          scrobbleList[i].artist["#text"] +
+          " - " +
+          scrobbleList[i].name +
+          "*** at " +
+          date.toLocaleString() +
+          "\n";
     }
     msg.push(tmpMsg);
     message.channel.send("Scrobbles successful!\nScrobbled songs:\n");
