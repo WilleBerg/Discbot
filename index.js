@@ -5,7 +5,7 @@ const ytdl = require("ytdl-core");
 const ply = require("play-dl");
 
 // DISCORDJS
-const { Client, Collection, Intents, VoiceChannel } = require("discord.js");
+const { Client, Collection, Intents, VoiceChannel, MessageEmbed } = require("discord.js");
 const { token, prefix, googleApi, indexDebug, lastfmDebug, userHandlerDebug } = require("./config.json");
 const client = new Client({
     intents: [
@@ -481,6 +481,7 @@ async function latestScrobbles(message) {
     var isPlaying =
         mostRecentTrack["@attr"] != null &&
         mostRecentTrack["@attr"]["nowplaying"] == "true";
+    log(JSON.stringify(tracks[0]));
     if (isPlaying) {
         log("User is playing a song!");
         start += 1;
@@ -488,71 +489,41 @@ async function latestScrobbles(message) {
         // Since the most recent track is not playing, we need to start at the second most recent track
         // However end should still be the same if end == 50
         //end += 1;
-        var msg = "\n";
+        // TODO: redo this so that there only 1 loop (number = i or i+1)
+        em = [];
         for (var i = start; i < amount; i++) {
             var date = new Date(tracks[i].date.uts * 1000);
-            if (
-                msg.length +
-                    (
-                        i +
-                        ". ***" +
-                        tracks[i].artist["#text"] +
-                        " - " +
-                        tracks[i].name +
-                        "*** at " +
-                        date.toLocaleString() +
-                        "\n"
-                    ).length >
-                2000
-            ) {
-                await message.channel.send(msg);
-                msg = "\n";
+
+            const newEmbed = new MessageEmbed()
+              .setColor(0x0099FF)
+              .setAuthor({ name: ( (i) + '. ' + tracks[i].artist["#text"] + " - " + tracks[i].name), iconURL: tracks[i].image[0]['#text']})
+              .setFooter({text: (' at ' + date.toLocaleString())})
+            em.push(newEmbed)
+            if (em.length == 10) {
+              await message.channel.send({embeds: em});
+              em = [];
             }
-            msg +=
-                i +
-                ". ***" +
-                tracks[i].artist["#text"] +
-                " - " +
-                tracks[i].name +
-                "*** at " +
-                date.toLocaleString() +
-                "\n";
+          }
+        if (em.length > 0) {
+        await message.channel.send({embeds: em});
         }
-        await message.channel.send(msg);
         return;
     }
-    var msg = "\n";
     for (var i = 0; i < amount; i++) {
-        var date = new Date(tracks[i].date.uts * 1000);
-        if (
-            msg.length +
-                (
-                    i +
-                    ". ***" +
-                    tracks[i].artist["#text"] +
-                    " - " +
-                    tracks[i].name +
-                    "*** at " +
-                    date.toLocaleString() +
-                    "\n"
-                ).length >
-            2000
-        ) {
-            await message.channel.send(msg);
-            msg = "\n";
-        }
-        msg +=
-            i +
-            1 +
-            ". ***" +
-            tracks[i].artist["#text"] +
-            " - " +
-            tracks[i].name +
-            "*** at " +
-            date.toLocaleString() +
-            "\n";
+      var date = new Date(tracks[i].date.uts * 1000);
+      const newEmbed = new MessageEmbed()
+        .setColor(0x0099FF)
+        .setAuthor({ name: ( (i + 1) + '. ' + tracks[i].artist["#text"] + " - " + tracks[i].name), iconURL: tracks[i].image[0]['#text']})
+        .setFooter({text: (' at ' + date.toLocaleString())})
+      em.push(newEmbed)
+      if (em.length == 10) {
+        await message.channel.send({embeds: em});
+        em = [];
+      }
     }
-    await message.channel.send(msg);
+    if (em.length > 0) {
+      await message.channel.send({embeds: em});
+    }
     return;
 }
 
@@ -747,42 +718,23 @@ async function multiScrobbler(message) {
             return;
         }
     }
-    var msg = [];
-    var tmpMsg = "";
+    em = [];
+    tracks = scrobbleList;
+    await message.channel.send('Scrobbled songs:')
     for (var i = 0; i < scrobbleList.length; i++) {
-        var date = new Date(tracks[i].date.uts * 1000);
-        if (
-            tmpMsg.length +
-                (
-                  i +
-                  ". ***" +
-                  scrobbleList[i].artist["#text"] +
-                  " - " +
-                  scrobbleList[i].name +
-                  "*** at " +
-                  date.toLocaleString() +
-                  "\n"
-                ).length >
-            2000
-        ) {
-            msg.push(tmpMsg);
-            tmpMsg = "";
-        }
-        tmpMsg +=
-          i + 1 +
-          ". ***" +
-          scrobbleList[i].artist["#text"] +
-          " - " +
-          scrobbleList[i].name +
-          "*** at " +
-          date.toLocaleString() +
-          "\n";
+      var date = new Date(tracks[i].date.uts * 1000);
+      const newEmbed = new MessageEmbed()
+        .setColor(0x0099FF)
+        .setAuthor({ name: ( (i + 1) + '. ' + tracks[i].artist["#text"] + " - " + tracks[i].name), iconURL: tracks[i].image[0]['#text']})
+        .setFooter({text: (' at ' + date.toLocaleString())})
+      em.push(newEmbed)
+      if (em.length == 10) {
+        await message.channel.send({embeds: em});
+        em = [];
+      }
     }
-    msg.push(tmpMsg);
-    message.channel.send("Scrobbles successful!\nScrobbled songs:\n");
-    for (var i = 0; i < msg.length; i++) {
-        log("Sending message: " + msg[i]);
-        await message.channel.send(msg[i]);
+    if (em.length > 0) {
+      await message.channel.send({embeds: em});
     }
     return;
 }
