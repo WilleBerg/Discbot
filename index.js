@@ -4,9 +4,41 @@ const fetch = require("node-fetch");
 const ytdl = require("ytdl-core");
 const ply = require("play-dl");
 
+const USER_E = '536906681570033664';
+const USER_W = '70999889231753216';
+
+const WO_SERVER_ID = '982289016672120852';
+const WO_SERVER_WELCOME_CHANNEL_ID = '982300142726156399';
+
+const RAINDANCE_URL = 'https://www.youtube.com/watch?v=aMTLs4qfJtI';
+const SOVIET_URL = 'https://www.youtube.com/watch?v=U06jlgpMtQs';
+const KACHOW_URL = 'https://tenor.com/view/kachow-cars-insane-kachow-gif-20913646';
+const GOOGLE_API_URL = 'https://www.googleapis.com/youtube/v3/search?';
+const YOUTUBE_URL = 'https://www.youtube.com/watch?';
+
+const GIGACHAD_EMOTE = '<:gigachad:852944386816081990>';
+const PEPELAUGH_EMOTE = '<:pepeLaugh2:852905715676872765>';
+const SADGE_EMOTE = '<:Sadge:852903092315357204>';
+const PEPEJAM_EMOTE = '<a:pepeJAM:852902332164603935>';
+const PEEPOLEAVE_EMOTE = '<a:peepoLeave:852903257256755250>';
+
+const SCROBBLER_TIMEOUT = 1000 * 60 * 60 * 5;
+const TIMER_TIME = 1000 * 10;
+
+const LOG_PATH = './log/log.log';
 // DISCORDJS
-const { Client, Collection, Intents, VoiceChannel, MessageEmbed } = require("discord.js");
-const { token, prefix, googleApi, indexDebug, lastfmDebug, userHandlerDebug } = require("./config.json");
+const {
+    Client,
+    Collection,
+    Intents,
+    MessageEmbed
+} = require("discord.js");
+const {
+    token,
+    prefix,
+    googleApi,
+    indexDebug
+} = require("./config.json");
 const client = new Client({
     intents: [
         Intents.FLAGS.GUILDS,
@@ -22,15 +54,14 @@ const client = new Client({
 
 const {
     AudioPlayerStatus,
-    StreamType,
     createAudioPlayer,
     createAudioResource,
     joinVoiceChannel,
 } = require("@discordjs/voice");
 
 // IMPORTED FUNCTIONS
-const { getNextScheduleEvent, getNextTime } = require("./scheduleMessage");
 const { sendBoop, boop } = require("./welcomeMessage");
+
 const {
     checkUser,
     registerUser,
@@ -40,12 +71,12 @@ const {
     setSessionKey,
     getSessionKey,
 } = require("./userHandler.js");
+
 const {
     getRecentTracks,
     scrobbleSong,
     updateNowPlaying,
     scrobbleSongs,
-    testScrobbles,
 } = require("./lastfm.js");
 
 // TODO TODO TODO TDOOD
@@ -72,7 +103,7 @@ var scrobblers = [];
 
 client.once("ready", async () => {
     await connect();
-    fs.appendFile("./log/log.log", "Bot started!\n", (err) => {
+    fs.appendFile(LOG_PATH, "Bot started!\n", (err) => {
         if (err) console.log("error", err);
     });
     alwaysLog(`Bot is ready!`);
@@ -80,12 +111,8 @@ client.once("ready", async () => {
         if (timer > 0) {
             timer -= 1000;
         } else {
-            //log("Timer has expired!");
-            //var channel = client.channels.cache.get("959114050275524728");
             updateScrobblers();
-
-            //channel.send({embeds: [getNextScheduleEvent()]});
-            timer = 1000 * 10;
+            timer = TIMER_TIME;
         }
         if (updateTimer > 0) {
             updateTimer -= 1000;
@@ -135,7 +162,6 @@ function createUpdateMessage(scrobblers) {
     for (let i = 0; i < longestMessage + 4; i++) {
         numberSignRow += numberSign;
     }
-    //numberSignRow += numberSign;
     var message = [numberSignRow];
     for (let i = 0; i < scrobblers.length; i++) {
         var currentMessage = `${i + 1}.${space}${
@@ -146,7 +172,6 @@ function createUpdateMessage(scrobblers) {
             scrobblers[i]["timeout"] / 1000
         } seconds until timeout.`;
         var spaces = longestMessage - currentMessage.length;
-        //alwaysLog("Spaces: " + spaces + "for message: " + currentMessage);
         for (let j = 0; j < spaces; j++) {
             currentMessage += space;
         }
@@ -166,8 +191,9 @@ client.once("disconnect", () => {
 });
 
 client.on("guildMemberAdd", (member) => {
-    if (member.guild.id == "982289016672120852") {
-        sendBoop(member, member.guild.channels.cache.get("982300142726156399"));
+    if (member.guild.id == WO_SERVER_ID) {
+        sendBoop(member, 
+            member.guild.channels.cache.get(WO_SERVER_WELCOME_CHANNEL_ID));
     }
 });
 
@@ -225,50 +251,43 @@ function handleMessage(message, serverQueue) {
     if (message.content.startsWith(`${prefix}play`) && serverQueue != null) {
         execute(message, serverQueue);
         return;
-    }
-    // !skip
+    } // !skip
     else if (
         message.content.startsWith(`${prefix}skip`) &&
         serverQueue != null
     ) {
         skip(message, serverQueue);
         return;
-    }
-    // !stop
+    } // !stop
     else if (
         message.content.startsWith(`${prefix}stop`) &&
         serverQueue != null
     ) {
         stop(message, serverQueue);
         return;
-    }
-    // !queue
+    } // !queue
     else if (message.content.startsWith(`${prefix}q`) && serverQueue != null) {
         printQueue(message, serverQueue);
-    }
-    // !raindance
+    } // !raindance
     else if (
         message.content.startsWith(`${prefix}raindance`) &&
         serverQueue != null
     ) {
-        message.content = "!play https://www.youtube.com/watch?v=aMTLs4qfJtI";
+        message.content = "!play " + RAINDANCE_URL;
         execute(message, serverQueue);
-    }
-    // !soviet
+    } // !soviet
     else if (
         message.content.startsWith(`${prefix}soviet`) &&
         serverQueue != null
     ) {
-        message.content = "!play https://www.youtube.com/watch?v=U06jlgpMtQs";
+        message.content = "!play " + SOVIET_URL;
         execute(message, serverQueue);
-    }
-    // !credits
+    } // !credits
     else if (message.content.startsWith(`${prefix}credits`)) {
         message.channel.send(
-            "<:gigachad:852944386816081990>@sylt<:gigachad:852944386816081990>"
+            GIGACHAD_EMOTE + "@sylt" + GIGACHAD_EMOTE
         );
-    }
-    // !help
+    } // !help
     else if (message.content.startsWith(`${prefix}help`)) {
         message.channel.send(
             "**!play** songName or Url - to play song\n" +
@@ -280,8 +299,7 @@ function handleMessage(message, serverQueue) {
                 "**!lfmhelp** - to get help with last.fm commands and setup\n" +
                 "**!credits**"
         );
-    }
-    // !lfmhelp
+    } // !lfmhelp
     else if (message.content.startsWith(`${prefix}lfmhelp`)) {
         message.channel.send(
             "Setup:\n1. **!register** - to register your discord on this bots database.\nThe bot only saves your username and id from your discord account.\n" +
@@ -291,28 +309,24 @@ function handleMessage(message, serverQueue) {
                 '**!duescrobble "lastFmUser"** to scrobble songs from that user to your account\n' +
                 "**!scrobblestop** to stop scrobbling songs from that user to your account\n"
         );
-    }
-    // !clearq
+    } // !clearq
     else if (message.content.startsWith(`${prefix}clearq`)) {
         clearQueue(serverQueue);
-    }
-    // !remove
+    } // !remove
     else if (message.content.startsWith(`${prefix}remove`)) {
         removeFromQueue(message, serverQueue);
-    }
-    // !kill
+    } // !kill
     else if (message.content.startsWith(`${prefix}kill`)) {
-        if (message.author.id == "70999889231753216") {
+        if (message.author.id == USER_W) {
             exit(message);
         } else {
             message.channel.send(
-                "You don't have permission to do that!<:pepeLaugh2:852905715676872765>"
+                "You don't have permission to do that!" + PEPELAUGH_EMOTE
             );
         }
-    }
-    // !scrobblestatus
+    } // !scrobblestatus
     else if (message.content.startsWith(`${prefix}scrobblestatus`)) {
-        if (message.author.id == "70999889231753216") {
+        if (message.author.id == USER_W) {
             var message0 = createUpdateMessage(scrobblers);
             var message1 = "```";
             for (let i = 0; i < message0.length; i++) {
@@ -322,41 +336,35 @@ function handleMessage(message, serverQueue) {
             message.channel.send(message1);
         } else {
             message.channel.send(
-                "You don't have permission to do that!<:pepeLaugh2:852905715676872765>"
+                "You don't have permission to do that!" + PEPELAUGH_EMOTE
             );
         }
-    }
-    // !boop
+    } // !boop
     else if (message.content.startsWith(`${prefix}boop`)) {
         boop(message.channel);
-    }
-    // !register
+    } // !register
     else if (message.content.startsWith(`${prefix}register`)) {
         register(message);
-    }
-    // !allowaccess
+    } // !allowaccess
     else if (message.content.startsWith(`${prefix}allowaccess`)) {
         allowAccess(message);
-    }
-    // !setuplastfm
+    } // !setuplastfm
     else if (message.content.startsWith(`${prefix}setuplastfm`)) {
         setupLastFM(message);
-    }
-    // !duoscrobble
+    } // !duoscrobble
     else if (message.content.startsWith(`${prefix}duoscrobble`)) {
         duoscrobble(message);
-    }
-    // !scrobblestop
+    } // !scrobblestop
     else if (message.content.startsWith(`${prefix}scrobblestop`)) {
         stopscrobbling(message);
-    }
-    // !ems
+    } // !ems
     else if (message.content.startsWith(`${prefix}ems`)) {
         if (
-            message.author.id != "536906681570033664" &&
-            message.author.id != "70999889231753216"
-        )
+            message.author.id != USER_E &&
+            message.author.id != USER_W 
+        ) {
             return;
+        }
         var mess = message.content.split(" ");
         var content = "";
         if (mess.length != 1 || mess.length > 2) {
@@ -365,19 +373,19 @@ function handleMessage(message, serverQueue) {
             content = "!duoscrobble sylt_- " + mess[1];
         }
         var newMessage = {
-            author: { id: "536906681570033664", username: "emmy" },
+            author: { id: USER_E, username: "emmy" },
             content: content,
             channel: message.channel,
         };
         duoscrobble(newMessage);
-    }
-    // !wbs
+    } // !wbs
     else if (message.content.startsWith(`${prefix}wbs`)) {
         if (
-            message.author.id != "536906681570033664" &&
-            message.author.id != "70999889231753216"
-        )
+            message.author.id != USER_E &&
+            message.author.id != USER_W 
+        ) {
             return;
+        }
         var mess = message.content.split(" ");
         var content = "";
         if (mess.length != 1 || mess.length > 2) {
@@ -386,53 +394,48 @@ function handleMessage(message, serverQueue) {
             content = "!duoscrobble teitan- " + mess[1];
         }
         var newMessage = {
-            author: { id: "70999889231753216", username: "sylt" },
+            author: { id: USER_W, username: "sylt" },
             content: content,
             channel: message.channel,
         };
         duoscrobble(newMessage);
-    }
-    // !es
+    } // !es
     else if (message.content.startsWith(`${prefix}es`)) {
         if (
-            message.author.id == "536906681570033664" ||
-            message.author.id == "70999889231753216"
+            message.author.id == USER_E ||
+            message.author.id == USER_W 
         ) {
             var newMessage = {
-                author: { id: "536906681570033664", username: "emmy" },
+                author: { id: USER_E, username: "emmy" },
                 content: message.content,
                 channel: message.channel,
             };
             stopscrobbling(newMessage);
         }
-    }
-    // !ws
+    } // !ws
     else if (message.content.startsWith(`${prefix}ws`)) {
         if (
-            message.author.id != "536906681570033664" ||
-            message.author.id != "70999889231753216"
+            message.author.id != USER_E ||
+            message.author.id != USER_W 
         ) {
             var newMessage = {
-                author: { id: "70999889231753216", username: "sylt" },
+                author: { id: USER_W, username: "sylt" },
                 content: message.content,
                 channel: message.channel,
             };
             stopscrobbling(newMessage);
         }
-    }
-    // !multiscrobble
+    } // !multiscrobble
     else if (message.content.startsWith(`${prefix}multiscrobble`)) {
         multiScrobbler(message);
-    }
-    // !latestscrobbles
+    } // !latestscrobbles
     else if (message.content.startsWith(`${prefix}ls`)) {
         latestScrobbles(message);
-    }
-    // !kachow
+    } // !kachow
     // ty copilot
     else if (message.content.startsWith(`${prefix}kachow`)) {
         message.channel.send(
-            "https://tenor.com/view/kachow-cars-insane-kachow-gif-20913646"
+            KACHOW_URL 
         );
     } else {
         message.channel.send("You need to enter a valid command!");
@@ -495,47 +498,57 @@ async function latestScrobbles(message) {
             var date = new Date(tracks[i].date.uts * 1000);
 
             const newEmbed = new MessageEmbed()
-              .setColor(0x0099FF)
-              .setAuthor({ name: ( (i) + '. ' + tracks[i].artist["#text"] + " - " + tracks[i].name), iconURL: tracks[i].image[0]['#text']})
-              .setFooter({text: (' at ' + date.toLocaleString())})
-            em.push(newEmbed)
+                .setColor(0x0099ff)
+                .setAuthor({
+                    name:
+                        i +
+                        ". " +
+                        tracks[i].artist["#text"] +
+                        " - " +
+                        tracks[i].name,
+                    iconURL: tracks[i].image[0]["#text"],
+                })
+                .setFooter({ text: " at " + date.toLocaleString() });
+            em.push(newEmbed);
             if (em.length == 10) {
-              await message.channel.send({embeds: em});
-              em = [];
+                await message.channel.send({ embeds: em });
+                em = [];
             }
-          }
+        }
         if (em.length > 0) {
-        await message.channel.send({embeds: em});
+            await message.channel.send({ embeds: em });
         }
         return;
     }
     for (var i = 0; i < amount; i++) {
-      var date = new Date(tracks[i].date.uts * 1000);
-      const newEmbed = new MessageEmbed()
-        .setColor(0x0099FF)
-        .setAuthor({ name: ( (i + 1) + '. ' + tracks[i].artist["#text"] + " - " + tracks[i].name), iconURL: tracks[i].image[0]['#text']})
-        .setFooter({text: (' at ' + date.toLocaleString())})
-      em.push(newEmbed)
-      if (em.length == 10) {
-        await message.channel.send({embeds: em});
-        em = [];
-      }
+        var date = new Date(tracks[i].date.uts * 1000);
+        const newEmbed = new MessageEmbed()
+            .setColor(0x0099ff)
+            .setAuthor({
+                name:
+                    i +
+                    1 +
+                    ". " +
+                    tracks[i].artist["#text"] +
+                    " - " +
+                    tracks[i].name,
+                iconURL: tracks[i].image[0]["#text"],
+            })
+            .setFooter({ text: " at " + date.toLocaleString() });
+        em.push(newEmbed);
+        if (em.length == 10) {
+            await message.channel.send({ embeds: em });
+            em = [];
+        }
     }
     if (em.length > 0) {
-      await message.channel.send({embeds: em});
+        await message.channel.send({ embeds: em });
     }
     return;
 }
 
 async function multiScrobbler(message) {
     var mess = message.content.split(" ");
-    // if (mess.length != 3) {
-    //     message.channel.send(
-    //         "You need to enter a valid command! You need to enter a username and a song range! You are missing something!"
-    //     );
-    //     return;
-    // }
-    // split the message into the username and the song range seperated by dash
     var user = mess[1];
     var songRangesRaw = [];
     for (var i = 2; i < mess.length; i++) {
@@ -563,11 +576,13 @@ async function multiScrobbler(message) {
                 );
                 return;
             }
-            log("Song range: " + songRange)
+            log("Song range: " + songRange);
             songRanges.push(songRange);
         }
     } catch {
-        message.channel.send("You need to enter a valid command! Something is wrong with your song ranges!");
+        message.channel.send(
+            "You need to enter a valid command! Something is wrong with your song ranges!"
+        );
         return;
     }
     var recentTracks;
@@ -595,10 +610,10 @@ async function multiScrobbler(message) {
     for (var i = 0; i < songRanges.length; i++) {
         var start = parseInt(songRanges[i][0]);
         var end = parseInt(songRanges[i][1]);
-        log("Start: " + start + " End: " + end)
+        log("Start: " + start + " End: " + end);
         var isPlaying =
-        mostRecentTrack["@attr"] != null &&
-        mostRecentTrack["@attr"]["nowplaying"] == "true";
+            mostRecentTrack["@attr"] != null &&
+            mostRecentTrack["@attr"]["nowplaying"] == "true";
         if (!isPlaying) {
             log("User is not playing a song!");
             start -= 1;
@@ -661,50 +676,6 @@ async function multiScrobbler(message) {
         }
         counter++;
     }
-    //var result1 = await scrobbleSong(songs[0], artists[0], albums[0], timestamps[0], sessionKey);
-    //log("Result: " + JSON.stringify(result1));
-
-    // create a 2d matrix with every binary combination from 0 - 31
-    // var combinations = [
-    // [0, 0, 0, 0, 0],
-    // [0, 0, 0, 0, 1],
-    // [0, 0, 0, 1, 0],
-    // [0, 0, 0, 1, 1],
-    // [0, 0, 1, 0, 0],
-    // [0, 0, 1, 0, 1],
-    // [0, 0, 1, 1, 0],
-    // [0, 0, 1, 1, 1],
-    // [0, 1, 0, 0, 0],
-    // [0, 1, 0, 0, 1],
-    // [0, 1, 0, 1, 0],
-    // [0, 1, 0, 1, 1],
-    // [0, 1, 1, 0, 0],
-    // [0, 1, 1, 0, 1],
-    // [0, 1, 1, 1, 0],
-    // [0, 1, 1, 1, 1],
-    // [1, 0, 0, 0, 0],
-    // [1, 0, 0, 0, 1],
-    // [1, 0, 0, 1, 0],
-    // [1, 0, 0, 1, 1],
-    // [1, 0, 1, 0, 0],
-    // [1, 0, 1, 0, 1],
-    // [1, 0, 1, 1, 0],
-    // [1, 0, 1, 1, 1],
-    // [1, 1, 0, 0, 0],
-    // [1, 1, 0, 0, 1],
-    // [1, 1, 0, 1, 0],
-    // [1, 1, 0, 1, 1],
-    // [1, 1, 1, 0, 0],
-    // [1, 1, 1, 0, 1],
-    // [1, 1, 1, 1, 0],
-    // [1, 1, 1, 1, 1],
-    // ];
-    // for (var i = 0; i < combinations.length; i++) {
-    //     var resul = await testScrobbles(songs, artists, albums, timestamps, sessionKey, combinations[i][0], combinations[i][1], combinations[i][2], combinations[i][3], combinations[i][4]);
-    //     if (resul == false) continue;
-    //     log("Result: " + JSON.stringify(resul));
-    // }
-
     for (var i = 0; i < results.length; i++) {
         if (results[i] == "error") {
             message.channel.send(
@@ -720,21 +691,30 @@ async function multiScrobbler(message) {
     }
     em = [];
     tracks = scrobbleList;
-    await message.channel.send('Scrobbled songs:')
+    await message.channel.send("Scrobbled songs:");
     for (var i = 0; i < scrobbleList.length; i++) {
-      var date = new Date(tracks[i].date.uts * 1000);
-      const newEmbed = new MessageEmbed()
-        .setColor(0x0099FF)
-        .setAuthor({ name: ( (i + 1) + '. ' + tracks[i].artist["#text"] + " - " + tracks[i].name), iconURL: tracks[i].image[0]['#text']})
-        .setFooter({text: (' at ' + date.toLocaleString())})
-      em.push(newEmbed)
-      if (em.length == 10) {
-        await message.channel.send({embeds: em});
-        em = [];
-      }
+        var date = new Date(tracks[i].date.uts * 1000);
+        const newEmbed = new MessageEmbed()
+            .setColor(0x0099ff)
+            .setAuthor({
+                name:
+                    i +
+                    1 +
+                    ". " +
+                    tracks[i].artist["#text"] +
+                    " - " +
+                    tracks[i].name,
+                iconURL: tracks[i].image[0]["#text"],
+            })
+            .setFooter({ text: " at " + date.toLocaleString() });
+        em.push(newEmbed);
+        if (em.length == 10) {
+            await message.channel.send({ embeds: em });
+            em = [];
+        }
     }
     if (em.length > 0) {
-      await message.channel.send({embeds: em});
+        await message.channel.send({ embeds: em });
     }
     return;
 }
@@ -948,7 +928,7 @@ async function duoscrobble(message) {
         isFirstScrobble: true,
         _id: message.author.id,
         remove: false,
-        timeout: 1000 * 60 * 60 * 5,
+        timeout: SCROBBLER_TIMEOUT,
     };
     scrobblers.push(newScrobbler);
     timer = 0;
@@ -1001,7 +981,7 @@ async function register(message) {
 async function exit(message) {
     alwaysLog("Exiting...");
     await close();
-    await message.channel.send("You killed me! <:Sadge:852903092315357204>");
+    await message.channel.send("You killed me! " + SADGE_EMOTE);
     client.destroy();
     process.exit();
 }
@@ -1011,10 +991,11 @@ function removeFromQueue(message, serverQueue) {
     const args = message.content.split(" ");
 
     const voiceChannel = message.member.voice.channel;
-    if (!voiceChannel)
+    if (!voiceChannel) {
         return message.channel.send(
             "You need to be in a voice channel to remove from the queue!"
         );
+    }
     const permissions = voiceChannel.permissionsFor(message.client.user);
     if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
         return message.channel.send(
@@ -1067,7 +1048,7 @@ function printQueue(message, serverQueue) {
         else message.channel.send("Song queue:" + songString);
     } else {
         message.channel.send(
-            "Song queue empty or bot is broken <:Sadge:852903092315357204>"
+            "Song queue empty or bot is broken " + SADGE_EMOTE
         );
     }
 }
@@ -1077,10 +1058,11 @@ async function execute(message, serverQueue) {
     const args = message.content.split(" ");
 
     const voiceChannel = message.member.voice.channel;
-    if (!voiceChannel)
+    if (!voiceChannel) {
         return message.channel.send(
             "You need to be in a voice channel to play music!"
         );
+    }
     const permissions = voiceChannel.permissionsFor(message.client.user);
     if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
         return message.channel.send(
@@ -1145,22 +1127,24 @@ async function execute(message, serverQueue) {
 
 async function skip(message, serverQueue) {
     alwaysLog("skipping");
-    if (!message.member.voice.channel)
+    if (!message.member.voice.channel) {
         return message.channel.send(
             "You have to be in a voice channel to stop the music!"
         );
-    if (!serverQueue)
+    }
+    if (!serverQueue) {
         return message.channel.send("There is no song that I could skip!");
+    }
     let rec = await getNextResource(serverQueue);
     if (rec != undefined) {
         serverQueue.player.play(rec);
         serverQueue.textChannel.send(
-            `Skipping song.\nNext up is **${serverQueue.songs[0].title}**<a:pepeJAM:852902332164603935>`
+            `Skipping song.\nNext up is **${serverQueue.songs[0].title}**${PEPEJAM_EMOTE}`
         );
     } else {
         serverQueue.connection.destroy();
         serverQueue.textChannel.send(
-            `Queue empty!\nIm leaving<a:peepoLeave:852903257256755250>`
+            `Queue empty!\nIm leaving ${PEEPOLEAVE_EMOTE}`
         );
         queue.delete(serverQueue.guild.id);
     }
@@ -1168,13 +1152,15 @@ async function skip(message, serverQueue) {
 
 function stop(message, serverQueue) {
     alwaysLog("Stopping music");
-    if (!message.member.voice.channel)
+    if (!message.member.voice.channel) {
         return message.channel.send(
             "You have to be in a voice channel to stop the music!"
         );
+    }
 
-    if (!serverQueue)
+    if (!serverQueue) {
         return message.channel.send("There is no song that I could stop!");
+    }
 
     serverQueue.connection.destroy();
     queue.delete(serverQueue.voiceChannel.guild.id);
@@ -1206,12 +1192,12 @@ async function play(guild, song, connection) {
         if (rec != undefined) {
             player.play(rec);
             serverQueue.textChannel.send(
-                `Now playing: **${serverQueue.songs[0].title}**<a:pepeJAM:852902332164603935>`
+                `Now playing: **${serverQueue.songs[0].title}**${PEPEJAM_EMOTE}`
             );
         } else {
             connection.destroy();
             serverQueue.textChannel.send(
-                `Queue empty!\nIm leaving<a:peepoLeave:852903257256755250>`
+                `Queue empty!\nIm leaving${PEEPOLEAVE_EMOTE}`
             );
             queue.delete(guild.id);
         }
@@ -1221,13 +1207,13 @@ async function play(guild, song, connection) {
         log(error.message);
         connection.destroy();
         serverQueue.textChannel.send(
-            `Error: **${error.message}** <:Sadge:852903092315357204> \nDestroying connection`
+            `Error: **${error.message}** ${SADGE_EMOTE} \nDestroying connection`
         );
         queue.delete(serverQueue.voiceChannel.guild.id);
         return;
     });
     serverQueue.textChannel.send(
-        `Start playing: **${song.title}**<a:pepeJAM:852902332164603935>`
+        `Start playing: **${song.title}**${PEPEJAM_EMOTE}`
     );
 }
 
@@ -1249,9 +1235,9 @@ async function getNextResource(serverQueue) {
 async function getVideoUrl(searchValue) {
     log("Searching for video url...");
     const { items } = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?q=${searchValue}&key=${googleApi}`
+        `${GOOGLE_API_URL}q=${searchValue}&key=${googleApi}`
     ).then((respone) => respone.json());
-    return `https://www.youtube.com/watch?v=${items[0].id.videoId}`;
+    return `${YOUTUBE_URL}v=${items[0].id.videoId}`;
 }
 
 function log(message) {
@@ -1259,7 +1245,7 @@ function log(message) {
     var toSave = `[${new Date().toLocaleString()}] ${message}`;
     console.log(toSave);
     try {
-        fs.appendFile("./log/log.log", toSave + "\n", (err) => {
+        fs.appendFile(LOG_PATH, toSave + "\n", (err) => {
             if (err) log(`ERROR: currently inside callback: ${err}`);
         });
     } catch (error) {
@@ -1271,7 +1257,7 @@ function alwaysLog(message) {
     var toSave = `[${new Date().toLocaleString()}] ${message}`;
     console.log(toSave);
     try {
-        fs.appendFile("./log/log.log", toSave + "\n", (err) => {
+        fs.appendFile(LOG_PATH, toSave + "\n", (err) => {
             if (err) log(`ERROR: currently inside callback: ${err}`);
         });
     } catch (error) {
