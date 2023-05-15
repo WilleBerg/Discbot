@@ -1,8 +1,5 @@
 // PACKAGES
 const fs = require("fs");
-const fetch = require("node-fetch");
-const ytdl = require("ytdl-core");
-const ply = require("play-dl");
 
 const USER_E = '536906681570033664';
 const USER_W = '70999889231753216';
@@ -12,15 +9,12 @@ const WO_SERVER_WELCOME_CHANNEL_ID = '982300142726156399';
 
 const RAINDANCE_URL = 'https://www.youtube.com/watch?v=aMTLs4qfJtI';
 const SOVIET_URL = 'https://www.youtube.com/watch?v=U06jlgpMtQs';
-const KACHOW_URL = 'https://tenor.com/view/kachow-cars-insane-kachow-gif-20913646';
-const GOOGLE_API_URL = 'https://www.googleapis.com/youtube/v3/search?';
-const YOUTUBE_URL = 'https://www.youtube.com/watch?';
+const KACHOW_URL = 'https://tenor.com/view/' + 
+                   'kachow-cars-insane-kachow-gif-20913646';
 
 const GIGACHAD_EMOTE = '<:gigachad:852944386816081990>';
 const PEPELAUGH_EMOTE = '<:pepeLaugh2:852905715676872765>';
 const SADGE_EMOTE = '<:Sadge:852903092315357204>';
-const PEPEJAM_EMOTE = '<a:pepeJAM:852902332164603935>';
-const PEEPOLEAVE_EMOTE = '<a:peepoLeave:852903257256755250>';
 
 const SCROBBLER_TIMEOUT = 1000 * 60 * 60 * 5;
 const TIMER_TIME = 1000 * 10;
@@ -36,7 +30,6 @@ const {
 const {
     token,
     prefix,
-    googleApi,
     indexDebug
 } = require("./config.json");
 const client = new Client({
@@ -53,10 +46,6 @@ const client = new Client({
 });
 
 const {
-    AudioPlayerStatus,
-    createAudioPlayer,
-    createAudioResource,
-    joinVoiceChannel,
 } = require("@discordjs/voice");
 
 // IMPORTED FUNCTIONS
@@ -79,9 +68,18 @@ const {
     scrobbleSongs,
 } = require("./lastfm.js");
 
+const {
+    execute,
+    skip,
+    stop,
+    clearQueue,
+    removeFromQueue
+} = require('./musicHandler.js');
+
+const { log, alwaysLog } = require('./logging.js');
+
 // TODO TODO TODO TDOOD
 // CHANGE WAY OF DOING THIS PLSSS
-const DEBUGGING = indexDebug;
 
 let timer = 0;
 let updateTimer = 0;
@@ -144,7 +142,6 @@ function createUpdateMessage(scrobblers) {
     if (scrobblers.length == 0) return ["No scrobblers"];
     var space = " ";
     var numberSign = "#";
-    var newLine = "\n";
     var longestMessage = 0;
     for (let i = 0; i < scrobblers.length; i++) {
         var currentMessage = `${i + 1}${space}${
@@ -199,7 +196,8 @@ client.on("guildMemberAdd", (member) => {
 
 client.on("messageCreate", async (message) => {
     log(
-        `Message received: ${message.content} : ${message.author.username} : ${message.channel.type}`
+        `Message received: ${message.content} : ` + 
+        `${message.author.username} : ${message.channel.type}`
     );
     if (message.author.bot) return;
     if (!message.content.startsWith(prefix)) return;
@@ -237,19 +235,21 @@ client.on("interactionCreate", async (interaction) => {
     }
 });
 
+
 function handleMessage(message, serverQueue) {
     // TODO: Redo this please
     // Perhaps a for-loop, just looping through commands?
     // But how to call correct function?
     alwaysLog(
-        `Will try to handle ${message.content} from user ${message.author.username}`
+        `Will try to handle ${message.content} from ` + 
+            `user ${message.author.username}`
     );
     if (serverQueue == null) {
         alwaysLog("Server queue is null, assuming private message");
     }
     // !play
-    if (message.content.startsWith(`${prefix}play`) && serverQueue != null) {
-        execute(message, serverQueue);
+    if (message.content.startsWith(`${prefix}play`)) {
+        execute(message, serverQueue, queue);
         return;
     } // !skip
     else if (
@@ -263,7 +263,7 @@ function handleMessage(message, serverQueue) {
         message.content.startsWith(`${prefix}stop`) &&
         serverQueue != null
     ) {
-        stop(message, serverQueue);
+        stop(message, serverQueue, queue);
         return;
     } // !queue
     else if (message.content.startsWith(`${prefix}q`) && serverQueue != null) {
@@ -302,12 +302,19 @@ function handleMessage(message, serverQueue) {
     } // !lfmhelp
     else if (message.content.startsWith(`${prefix}lfmhelp`)) {
         message.channel.send(
-            "Setup:\n1. **!register** - to register your discord on this bots database.\nThe bot only saves your username and id from your discord account.\n" +
-                "2. **!allowaccess** - to allow the bot to scrobble your songs. Follow the link provided and accept before next step\n" +
-                "3. **!setuplastfm** - to setup your lastfm account with the bot.\n" +
+            "Setup:\n1. **!register** - to register your discord on " +
+                "this bots database.\nThe bot only saves your username " +
+                "and id from your discord account.\n" +
+                "2. **!allowaccess** - to allow the bot to scrobble your " +
+                "songs. Follow the link provided and accept before next " +
+                "step\n" +
+                "3. **!setuplastfm** - to setup your lastfm account " +
+                "with the bot.\n" +
                 "After setup you can use the following commands:\n" +
-                '**!duescrobble "lastFmUser"** to scrobble songs from that user to your account\n' +
-                "**!scrobblestop** to stop scrobbling songs from that user to your account\n"
+                '**!duoscrobble "lastFmUser"** to scrobble songs from ' +
+                'that user to your account\n' +
+                "**!scrobblestop** to stop scrobbling songs from that user " +
+                "to your account\n"
         );
     } // !clearq
     else if (message.content.startsWith(`${prefix}clearq`)) {
@@ -468,7 +475,8 @@ async function latestScrobbles(message) {
         recentTracks = await getRecentTracks(user, 200);
         if (recentTracks == null || recentTracks == undefined) {
             message.channel.send(
-                "You need to enter a valid command! The user you entered does not have any recent tracks!"
+                "You need to enter a valid command! " +
+                "The user you entered does not have any recent tracks!"
             );
             return;
         }
@@ -476,7 +484,8 @@ async function latestScrobbles(message) {
         mostRecentTrack = tracks[0];
     } catch (error) {
         message.channel.send(
-            "You need to enter a valid command! The user you entered does not have any recent tracks!"
+            "You need to enter a valid command! " +
+            "The user you entered does not have any recent tracks!"
         );
         return;
     }
@@ -489,7 +498,8 @@ async function latestScrobbles(message) {
         log("User is playing a song!");
         start += 1;
         amount++;
-        // Since the most recent track is not playing, we need to start at the second most recent track
+        // Since the most recent track is not playing, we need to start 
+        // at the second most recent track.
         // However end should still be the same if end == 50
         //end += 1;
         // TODO: redo this so that there only 1 loop (number = i or i+1)
@@ -520,6 +530,7 @@ async function latestScrobbles(message) {
         }
         return;
     }
+    em = [];
     for (var i = 0; i < amount; i++) {
         var date = new Date(tracks[i].date.uts * 1000);
         const newEmbed = new MessageEmbed()
@@ -581,7 +592,8 @@ async function multiScrobbler(message) {
         }
     } catch {
         message.channel.send(
-            "You need to enter a valid command! Something is wrong with your song ranges!"
+            "You need to enter a valid command! " +
+            "Something is wrong with your song ranges!"
         );
         return;
     }
@@ -592,7 +604,8 @@ async function multiScrobbler(message) {
         recentTracks = await getRecentTracks(user, 200, 1);
         if (recentTracks == null || recentTracks == undefined) {
             message.channel.send(
-                "You need to enter a valid command! The user you entered does not have any recent tracks!"
+                "You need to enter a valid command!" +
+                "The user you entered does not have any recent tracks!"
             );
             return;
         }
@@ -600,7 +613,8 @@ async function multiScrobbler(message) {
         mostRecentTrack = tracks[0];
     } catch (error) {
         message.channel.send(
-            "You need to enter a valid command! The user you entered does not have any recent tracks!"
+            "You need to enter a valid command! " + 
+            "The user you entered does not have any recent tracks!"
         );
         return;
     }
@@ -621,7 +635,8 @@ async function multiScrobbler(message) {
         }
         if (tracks.length < end) {
             message.channel.send(
-                "You need to enter a valid command! The user you entered does not have that many recent tracks!"
+                "You need to enter a valid command! " +  
+                "The user you entered does not have that many recent tracks!"
             );
             return;
         }
@@ -636,7 +651,8 @@ async function multiScrobbler(message) {
     var sessionKey = await getSessionKey(message.author);
     if (sessionKey == false) {
         message.channel.send(
-            "You do not have a valid session key! Please redo the lastFM setup process!"
+            "You do not have a valid session key! " + 
+            "Please redo the lastFM setup process!"
         );
         return;
     }
@@ -684,7 +700,8 @@ async function multiScrobbler(message) {
             return;
         } else if (results[i] == "invalidsession") {
             message.channel.send(
-                "Your session key is invalid! Please redo the lastFM setup process!"
+                "Your session key is invalid! " +
+                "Please redo the lastFM setup process!"
             );
             return;
         }
@@ -742,7 +759,8 @@ async function updateScrobblers() {
         var recentTracks = await getRecentTracks(userToListen, 3, 1);
         if (recentTracks == "error") {
             alwaysLog(
-                `Error getting recent tracks for ${userToListen}, check lastfmLog.log for more info`
+                `Error getting recent tracks for ${userToListen}, ` + 
+                `check lastfmLog.log for more info`
             );
             continue;
         }
@@ -798,7 +816,8 @@ async function updateScrobblers() {
                     result["message"].startsWith("Invalid session key")
                 ) {
                     scrobblers[i]["user"].send(
-                        "Your session key is invalid, please re-register your LastFM account with the bot"
+                        "Your session key is invalid, " +
+                        "please re-register your LastFM account with the bot"
                     );
                     scrobblers[i].remove = true;
                     continue;
@@ -918,7 +937,8 @@ async function duoscrobble(message) {
     }
     var userToListen = args[1];
     alwaysLog(
-        `Will try to scrobble ${userToListen}'s songs for ${message.author.username}`
+        `Will try to scrobble ${userToListen}'s songs for ` + 
+        `${message.author.username}`
     );
     var newScrobbler = {
         user: message.author,
@@ -933,7 +953,8 @@ async function duoscrobble(message) {
     scrobblers.push(newScrobbler);
     timer = 0;
     await message.channel.send(
-        `Will try to scrobble ${userToListen}'s songs for ${message.author.username}`
+        `Will try to scrobble ${userToListen}'s songs for ` + 
+        `${message.author.username}`
     );
 }
 
@@ -942,7 +963,8 @@ async function setupLastFM(message) {
     if (resp == true) {
         message.channel.send(
             "You have successfully set up your LastFM account!\n" +
-                'You should now be able to use **!duoscrobble** "**userToDuoScrobble**"'
+            'You should now be able to use ' +
+            '**!duoscrobble** "**userToDuoScrobble**"'
         );
     } else {
         message.channel.send("Something went wrong");
@@ -986,51 +1008,6 @@ async function exit(message) {
     process.exit();
 }
 
-function removeFromQueue(message, serverQueue) {
-    alwaysLog(`Will try to remove ${message.content}`);
-    const args = message.content.split(" ");
-
-    const voiceChannel = message.member.voice.channel;
-    if (!voiceChannel) {
-        return message.channel.send(
-            "You need to be in a voice channel to remove from the queue!"
-        );
-    }
-    const permissions = voiceChannel.permissionsFor(message.client.user);
-    if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
-        return message.channel.send(
-            "I need the permissions to join and speak in your voice channel!"
-        );
-    }
-
-    if (
-        !isNaN(args[1]) &&
-        serverQueue != undefined &&
-        serverQueue.songs.length > args[1] &&
-        args[1] > 0
-    ) {
-        console.log("Current queue length" + serverQueue.songs.length);
-        let emptyList = [];
-        let songToRemove = serverQueue.songs[args[1]];
-        for (let i = 0; i < serverQueue.songs.length; i++) {
-            if (serverQueue.songs[i].title != songToRemove.title) {
-                emptyList.push(serverQueue.songs[i]);
-            }
-        }
-        serverQueue.songs = emptyList;
-        message.channel.send(`Removed **${songToRemove.title}** from queue!`);
-    } else {
-        message.channel.send("Invalid number!");
-    }
-}
-
-function clearQueue(serverQueue) {
-    alwaysLog("Clearing queue");
-    if (serverQueue != undefined) {
-        serverQueue.songs = [];
-        serverQueue.textChannel.send("Queue has been cleared!");
-    }
-}
 
 function printQueue(message, serverQueue) {
     alwaysLog("Printing queue");
@@ -1053,219 +1030,4 @@ function printQueue(message, serverQueue) {
     }
 }
 
-async function execute(message, serverQueue) {
-    alwaysLog(`Will try to execute ${message.content}`);
-    const args = message.content.split(" ");
-
-    const voiceChannel = message.member.voice.channel;
-    if (!voiceChannel) {
-        return message.channel.send(
-            "You need to be in a voice channel to play music!"
-        );
-    }
-    const permissions = voiceChannel.permissionsFor(message.client.user);
-    if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
-        return message.channel.send(
-            "I need the permissions to join and speak in your voice channel!"
-        );
-    }
-
-    let tmp = "";
-    for (let i = 0; i < args.length; i++) {
-        if (i != 0) tmp += args[i] + " ";
-    }
-    let args2 = await getVideoUrl(tmp);
-    console.log(args2);
-    let songInfo;
-    try {
-        songInfo = await ytdl.getInfo(args2);
-    } catch (error) {
-        console.error(error);
-        return message.channel.send("Could not find video");
-    }
-    const song = {
-        title: songInfo.videoDetails.title,
-        url: songInfo.videoDetails.video_url,
-    };
-
-    if (!serverQueue) {
-        const queueContruct = {
-            textChannel: message.channel,
-            voiceChannel: voiceChannel,
-            connection: null,
-            songs: [],
-            volume: 5,
-            playing: true,
-            player: null,
-            guild: message.guild,
-        };
-
-        queue.set(message.guild.id, queueContruct);
-
-        queueContruct.songs.push(song);
-
-        try {
-            var connection = joinVoiceChannel({
-                channelId: voiceChannel.id,
-                guildId: message.channel.guild.id,
-                adapterCreator: message.channel.guild.voiceAdapterCreator,
-            });
-            queueContruct.connection = connection;
-            play(message.guild, queueContruct.songs[0], connection);
-        } catch (err) {
-            console.log(err);
-            queue.delete(message.guild.id);
-            return message.channel.send(err);
-        }
-    } else {
-        serverQueue.songs.push(song);
-        return message.channel.send(
-            `**${song.title}** has been added to the queue!`
-        );
-    }
-}
-
-async function skip(message, serverQueue) {
-    alwaysLog("skipping");
-    if (!message.member.voice.channel) {
-        return message.channel.send(
-            "You have to be in a voice channel to stop the music!"
-        );
-    }
-    if (!serverQueue) {
-        return message.channel.send("There is no song that I could skip!");
-    }
-    let rec = await getNextResource(serverQueue);
-    if (rec != undefined) {
-        serverQueue.player.play(rec);
-        serverQueue.textChannel.send(
-            `Skipping song.\nNext up is **${serverQueue.songs[0].title}**${PEPEJAM_EMOTE}`
-        );
-    } else {
-        serverQueue.connection.destroy();
-        serverQueue.textChannel.send(
-            `Queue empty!\nIm leaving ${PEEPOLEAVE_EMOTE}`
-        );
-        queue.delete(serverQueue.guild.id);
-    }
-}
-
-function stop(message, serverQueue) {
-    alwaysLog("Stopping music");
-    if (!message.member.voice.channel) {
-        return message.channel.send(
-            "You have to be in a voice channel to stop the music!"
-        );
-    }
-
-    if (!serverQueue) {
-        return message.channel.send("There is no song that I could stop!");
-    }
-
-    serverQueue.connection.destroy();
-    queue.delete(serverQueue.voiceChannel.guild.id);
-    return message.channel.send("Stopping!\nQueue has been emptied.");
-}
-
-async function play(guild, song, connection) {
-    alwaysLog(`Starting to play ${song.title}`);
-    const serverQueue = queue.get(guild.id);
-    if (!song) {
-        serverQueue.voiceChannel.leave();
-        queue.delete(guild.id);
-        return;
-    }
-
-    const stream = await ply.stream(song.url);
-    const resource = createAudioResource(stream.stream, {
-        inputType: stream.type,
-    });
-    const player = createAudioPlayer();
-
-    player.play(resource);
-    connection.subscribe(player);
-    serverQueue.player = player;
-
-    player.on(AudioPlayerStatus.Idle, async () => {
-        const rec = await getNextResource(serverQueue);
-
-        if (rec != undefined) {
-            player.play(rec);
-            serverQueue.textChannel.send(
-                `Now playing: **${serverQueue.songs[0].title}**${PEPEJAM_EMOTE}`
-            );
-        } else {
-            connection.destroy();
-            serverQueue.textChannel.send(
-                `Queue empty!\nIm leaving${PEEPOLEAVE_EMOTE}`
-            );
-            queue.delete(guild.id);
-        }
-    });
-    player.on("error", (error) => {
-        console.error(error.message);
-        log(error.message);
-        connection.destroy();
-        serverQueue.textChannel.send(
-            `Error: **${error.message}** ${SADGE_EMOTE} \nDestroying connection`
-        );
-        queue.delete(serverQueue.voiceChannel.guild.id);
-        return;
-    });
-    serverQueue.textChannel.send(
-        `Start playing: **${song.title}**${PEPEJAM_EMOTE}`
-    );
-}
-
-async function getNextResource(serverQueue) {
-    log("shifting queue...");
-    serverQueue.songs.shift();
-    log("creating stream...");
-    if (serverQueue.songs[0] != undefined) {
-        const stream = await ply.stream(serverQueue.songs[0].url);
-        log("creating audio resource...");
-        const resource = createAudioResource(stream.stream, {
-            inputType: stream.type,
-        });
-        log("returning resource, will try playing...");
-        return resource;
-    } else return undefined;
-}
-
-async function getVideoUrl(searchValue) {
-    log("Searching for video url...");
-    const { items } = await fetch(
-        `${GOOGLE_API_URL}q=${searchValue}&key=${googleApi}`
-    ).then((respone) => respone.json());
-    return `${YOUTUBE_URL}v=${items[0].id.videoId}`;
-}
-
-function log(message) {
-    if (!DEBUGGING) return;
-    var toSave = `[${new Date().toLocaleString()}] ${message}`;
-    console.log(toSave);
-    try {
-        fs.appendFile(LOG_PATH, toSave + "\n", (err) => {
-            if (err) log(`ERROR: currently inside callback: ${err}`);
-        });
-    } catch (error) {
-        console.error(error);
-        log("Error writing to log file");
-    }
-}
-function alwaysLog(message) {
-    var toSave = `[${new Date().toLocaleString()}] ${message}`;
-    console.log(toSave);
-    try {
-        fs.appendFile(LOG_PATH, toSave + "\n", (err) => {
-            if (err) log(`ERROR: currently inside callback: ${err}`);
-        });
-    } catch (error) {
-        console.error(error);
-        log("Error writing to log file");
-    }
-}
-
 client.login(token);
-
-module.exports = { log, alwaysLog, DEBUGGING };
