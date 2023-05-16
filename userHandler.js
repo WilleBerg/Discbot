@@ -11,7 +11,7 @@ seperate function, but instead just call it once.
 // TODO: Add child check function
 
 const { MongoClient, ServerApiVersion } = require("mongodb");
-const { mongoUsername, mongoPassword, mongoUrl, userHandlerDebug } = require("./config.json");
+const { mongoUsername, mongoPassword, mongoUrl } = require("./config.json");
 const uri = `mongodb+srv://${mongoUsername}:${mongoPassword}@${mongoUrl}/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
     useNewUrlParser: true,
@@ -19,9 +19,13 @@ const client = new MongoClient(uri, {
     serverApi: ServerApiVersion.v1,
 });
 const { PythonShell } = require("python-shell");
-var fs = require("fs");
-const { spawn } = require("node:child_process");
-const DEBUGGING = userHandlerDebug;
+
+const {
+    log,
+    alwaysLog
+} = require('./logging.js');
+
+
 
 async function connect() {
     try {
@@ -308,32 +312,28 @@ async function getSessionKey(user) {
     }
 }
 
-function log(message) {
-    if (!DEBUGGING) return;
-    var toSave = `[${new Date().toLocaleString()}] ${message}`;
-    console.log(toSave);
-    try {
-        fs.appendFile("./log/databaseLog.log", toSave + "\n", (err) => {
-            if (err) log(`ERROR: currently inside callback: ${err}`);
-        });
-    } catch (error) {
-        console.error(error);
-        log("Error writing to log file");
+async function register(message) {
+    var userCheck = await checkUser(message.author);
+    if (userCheck == true) {
+        log("User exists!");
+        await message.channel.send("User exists!");
+    } else if (userCheck == false) {
+        log("User doesn't exist!");
+        await message.channel.send("User doesn't exist, will try registering!");
+        var userRegistrationResult = await registerUser(message.author);
+        if (userRegistrationResult == true) {
+            alwaysLog("User registered!");
+            await message.channel.send("User registered!");
+        } else {
+            alwaysLog("User registration failed!");
+            await message.channel.send("User registration failed!");
+        }
+    } else {
+        alwaysLog("Error!");
+        await message.channel.send("Error!");
     }
 }
 
-function alwaysLog(message) {
-    var toSave = `[${new Date().toLocaleString()}] ${message}`;
-    console.log(toSave);
-    try {
-        fs.appendFile("./log/databaseLog.log", toSave + "\n", (err) => {
-            if (err) log(`ERROR: currently inside callback: ${err}`);
-        });
-    } catch (error) {
-        console.error(error);
-        alwaysLog("Error writing to log file");
-    }
-}
 module.exports = {
     checkUser,
     registerUser,
@@ -343,4 +343,5 @@ module.exports = {
     close,
     userAllowAccess,
     getSessionKey,
+    register
 };

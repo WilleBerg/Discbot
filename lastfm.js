@@ -8,6 +8,11 @@ const LAST_FM_API_KEY = apiKey;
 const LAST_FM_API_BASE = "http://ws.audioscrobbler.com/2.0/";
 const DEBUGGING = lastfmDebug;
 
+const {
+    userAllowAccess,
+    setSessionKey,
+} = require("./userHandler.js");
+
 async function scrobbleSong(
     songName,
     artistName,
@@ -460,10 +465,33 @@ function log(message) {
         log("Error writing to log file");
     }
 }
+
+async function setupLastFM(message) {
+    const resp = await setSessionKey(message.author);
+    if (resp == true) {
+        message.channel.send(
+            "You have successfully set up your LastFM account!\n" +
+            'You should now be able to use ' +
+            '**!duoscrobble** "**userToDuoScrobble**"'
+        );
+    } else {
+        message.channel.send("Something went wrong");
+    }
+}
+
+async function allowAccess(message) {
+    var allowAccessResult = await userAllowAccess(message);
+    if (!allowAccessResult) {
+        message.channel.send("Something went wrong!");
+    }
+}
+
 module.exports = {
     scrobbleSong,
     getRecentTracks,
     updateNowPlaying,
     scrobbleSongs,
     testScrobbles,
+    setupLastFM,
+    allowAccess
 };

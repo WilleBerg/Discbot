@@ -19,6 +19,34 @@ const SADGE_EMOTE = '<:Sadge:852903092315357204>';
 const TIMER_TIME = 1000 * 10;
 
 const LOG_PATH = './log/log.log';
+
+const LFMHELP_STRING = (
+    "Setup:\n1. **!register** - to register your discord on " +
+    "this bots database.\nThe bot only saves your username " +
+    "and id from your discord account.\n" +
+    "2. **!allowaccess** - to allow the bot to scrobble your " +
+    "songs. Follow the link provided and accept before next " +
+    "step\n" +
+    "3. **!setuplastfm** - to setup your lastfm account " +
+    "with the bot.\n" +
+    "After setup you can use the following commands:\n" +
+    '**!duoscrobble "lastFmUser"** to scrobble songs from ' +
+    'that user to your account\n' +
+    "**!scrobblestop** to stop scrobbling songs from that user " +
+    "to your account\n"
+);
+
+const HELP_STRING = (
+    "**!play** songName or Url - to play song\n" +
+    "**!skip** - to skip current song\n" +
+    "**!stop** - to stop bot completely\n" +
+    "**!q** to get current queue\n" +
+    "**!clearq** - to clear the queue\n" +
+    "**!remove** number - to remove specific song from queue\n" +
+    "**!lfmhelp** - to get help with last.fm commands and setup\n" +
+    "**!credits**"
+)
+
 // DISCORDJS
 const {
     Client,
@@ -51,12 +79,8 @@ const {
 const { sendBoop, boop } = require("./welcomeMessage");
 
 const {
-    checkUser,
-    registerUser,
     connect,
     close,
-    userAllowAccess,
-    setSessionKey,
 } = require("./userHandler.js");
 
 const {
@@ -76,10 +100,9 @@ const {
     getScrobblers
 } = require('./scrobbler.js');
 
-const { log, alwaysLog } = require('./logging.js');
+const { register } = require('./userHandler.js')
 
-// TODO TODO TODO TDOOD
-// CHANGE WAY OF DOING THIS PLSSS
+const { log, alwaysLog } = require('./logging.js');
 
 let timer = 0;
 let updateTimer = 0;
@@ -115,14 +138,14 @@ client.once("ready", async () => {
             updateTimer -= 1000;
         } else {
             updateTimer = 1000 * 60 * 5;
-            if (getScrobblers.length > 0) {
+            if (getScrobblers().length > 0) {
                 // Add these to function instead
                 sendMessage = true;
                 alwaysLog("");
                 alwaysLog("UPDATE MESSAGE");
                 alwaysLog("");
-                alwaysLog("Current scrobblers: " + getScrobblers.length);
-                var message = createUpdateMessage(getScrorglers());
+                alwaysLog("Current scrobblers: " + getScrobblers().length);
+                var message = createUpdateMessage(getScrobblers());
                 for (let i = 0; i < message.length; i++) {
                     alwaysLog(message[i]);
                 }
@@ -137,46 +160,6 @@ client.once("ready", async () => {
     }, 1000);
 });
 
-function createUpdateMessage(scrobblers) {
-    if (scrobblers.length == 0) return ["No scrobblers"];
-    var space = " ";
-    var numberSign = "#";
-    var longestMessage = 0;
-    for (let i = 0; i < scrobblers.length; i++) {
-        var currentMessage = `${i + 1}${space}${
-            scrobblers[i]["user"].username
-        }${space}is scrobbling${space}${
-            scrobblers[i]["userToListen"]
-        }'s songs. Time left: ${
-            scrobblers[i]["timeout"] / 1000
-        } seconds until timeout.`;
-        if (currentMessage.length > longestMessage) {
-            longestMessage = currentMessage.length;
-        }
-    }
-    var numberSignRow = "#";
-    for (let i = 0; i < longestMessage + 4; i++) {
-        numberSignRow += numberSign;
-    }
-    var message = [numberSignRow];
-    for (let i = 0; i < scrobblers.length; i++) {
-        var currentMessage = `${i + 1}.${space}${
-            scrobblers[i]["user"].username
-        }${space}is scrobbling${space}${
-            scrobblers[i]["userToListen"]
-        }'s songs. Time left: ${
-            scrobblers[i]["timeout"] / 1000
-        } seconds until timeout.`;
-        var spaces = longestMessage - currentMessage.length;
-        for (let j = 0; j < spaces; j++) {
-            currentMessage += space;
-        }
-        if (spaces > 0) currentMessage += space;
-        message.push(numberSign + space + currentMessage + space + numberSign);
-    }
-    message.push(numberSignRow);
-    return message;
-}
 
 client.once("reconnecting", () => {
     console.log("Reconnecting!");
@@ -194,16 +177,14 @@ client.on("guildMemberAdd", (member) => {
 });
 
 client.on("messageCreate", async (message) => {
+    if (message.author.bot) return;
     log(
         `Message received: ${message.content} : ` + 
         `${message.author.username} : ${message.channel.type}`
     );
-    if (message.author.bot) return;
     if (!message.content.startsWith(prefix)) return;
     // respond to private message
     if (message.channel.type == "DM") {
-        log("Private message");
-        log(message.content);
         try {
             handleMessage(message, null);
         } catch (error) {
@@ -288,33 +269,10 @@ function handleMessage(message, serverQueue) {
         );
     } // !help
     else if (message.content.startsWith(`${prefix}help`)) {
-        message.channel.send(
-            "**!play** songName or Url - to play song\n" +
-                "**!skip** - to skip current song\n" +
-                "**!stop** - to stop bot completely\n" +
-                "**!q** to get current queue\n" +
-                "**!clearq** - to clear the queue\n" +
-                "**!remove** number - to remove specific song from queue\n" +
-                "**!lfmhelp** - to get help with last.fm commands and setup\n" +
-                "**!credits**"
-        );
+        message.channel.send(HELP_STRING);
     } // !lfmhelp
     else if (message.content.startsWith(`${prefix}lfmhelp`)) {
-        message.channel.send(
-            "Setup:\n1. **!register** - to register your discord on " +
-                "this bots database.\nThe bot only saves your username " +
-                "and id from your discord account.\n" +
-                "2. **!allowaccess** - to allow the bot to scrobble your " +
-                "songs. Follow the link provided and accept before next " +
-                "step\n" +
-                "3. **!setuplastfm** - to setup your lastfm account " +
-                "with the bot.\n" +
-                "After setup you can use the following commands:\n" +
-                '**!duoscrobble "lastFmUser"** to scrobble songs from ' +
-                'that user to your account\n' +
-                "**!scrobblestop** to stop scrobbling songs from that user " +
-                "to your account\n"
-        );
+        message.channel.send(LFMHELP_STRING);
     } // !clearq
     else if (message.content.startsWith(`${prefix}clearq`)) {
         clearQueue(serverQueue);
@@ -448,49 +406,6 @@ function handleMessage(message, serverQueue) {
     }
 }
 
-
-async function setupLastFM(message) {
-    const resp = await setSessionKey(message.author);
-    if (resp == true) {
-        message.channel.send(
-            "You have successfully set up your LastFM account!\n" +
-            'You should now be able to use ' +
-            '**!duoscrobble** "**userToDuoScrobble**"'
-        );
-    } else {
-        message.channel.send("Something went wrong");
-    }
-}
-
-async function allowAccess(message) {
-    var allowAccessResult = await userAllowAccess(message);
-    if (!allowAccessResult) {
-        message.channel.send("Something went wrong!");
-    }
-}
-
-async function register(message) {
-    var userCheck = await checkUser(message.author);
-    if (userCheck == true) {
-        log("User exists!");
-        await message.channel.send("User exists!");
-    } else if (userCheck == false) {
-        log("User doesn't exist!");
-        await message.channel.send("User doesn't exist, will try registering!");
-        var userRegistrationResult = await registerUser(message.author);
-        if (userRegistrationResult == true) {
-            alwaysLog("User registered!");
-            await message.channel.send("User registered!");
-        } else {
-            alwaysLog("User registration failed!");
-            await message.channel.send("User registration failed!");
-        }
-    } else {
-        alwaysLog("Error!");
-        await message.channel.send("Error!");
-    }
-}
-
 async function exit(message) {
     alwaysLog("Exiting...");
     await close();
@@ -499,6 +414,46 @@ async function exit(message) {
     process.exit();
 }
 
+function createUpdateMessage(scrobblers) {
+    if (scrobblers.length == 0) return ["No scrobblers"];
+    var space = " ";
+    var numberSign = "#";
+    var longestMessage = 0;
+    for (let i = 0; i < scrobblers.length; i++) {
+        var currentMessage = `${i + 1}${space}${
+            scrobblers[i]["user"].username
+        }${space}is scrobbling${space}${
+            scrobblers[i]["userToListen"]
+        }'s songs. Time left: ${
+            scrobblers[i]["timeout"] / 1000
+        } seconds until timeout.`;
+        if (currentMessage.length > longestMessage) {
+            longestMessage = currentMessage.length;
+        }
+    }
+    var numberSignRow = "#";
+    for (let i = 0; i < longestMessage + 4; i++) {
+        numberSignRow += numberSign;
+    }
+    var message = [numberSignRow];
+    for (let i = 0; i < scrobblers.length; i++) {
+        var currentMessage = `${i + 1}.${space}${
+            scrobblers[i]["user"].username
+        }${space}is scrobbling${space}${
+            scrobblers[i]["userToListen"]
+        }'s songs. Time left: ${
+            scrobblers[i]["timeout"] / 1000
+        } seconds until timeout.`;
+        var spaces = longestMessage - currentMessage.length;
+        for (let j = 0; j < spaces; j++) {
+            currentMessage += space;
+        }
+        if (spaces > 0) currentMessage += space;
+        message.push(numberSign + space + currentMessage + space + numberSign);
+    }
+    message.push(numberSignRow);
+    return message;
+}
 
 function printQueue(message, serverQueue) {
     alwaysLog("Printing queue");
