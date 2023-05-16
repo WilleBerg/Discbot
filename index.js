@@ -72,7 +72,8 @@ const {
     stopscrobbling,
     multiScrobbler,
     latestScrobbles,
-    updateScrobblers
+    updateScrobblers,
+    getScrobblers
 } = require('./scrobbler.js');
 
 const { log, alwaysLog } = require('./logging.js');
@@ -96,7 +97,6 @@ for (const file of commandFiles) {
 }
 
 const queue = new Map();
-var scrobblers = [];
 
 client.once("ready", async () => {
     await connect();
@@ -115,14 +115,14 @@ client.once("ready", async () => {
             updateTimer -= 1000;
         } else {
             updateTimer = 1000 * 60 * 5;
-            if (scrobblers.length > 0) {
+            if (getScrobblers.length > 0) {
                 // Add these to function instead
                 sendMessage = true;
                 alwaysLog("");
                 alwaysLog("UPDATE MESSAGE");
                 alwaysLog("");
-                alwaysLog("Current scrobblers: " + scrobblers.length);
-                var message = createUpdateMessage(scrobblers);
+                alwaysLog("Current scrobblers: " + getScrobblers.length);
+                var message = createUpdateMessage(getScrorglers());
                 for (let i = 0; i < message.length; i++) {
                     alwaysLog(message[i]);
                 }
@@ -333,7 +333,7 @@ function handleMessage(message, serverQueue) {
     } // !scrobblestatus
     else if (message.content.startsWith(`${prefix}scrobblestatus`)) {
         if (message.author.id == USER_W) {
-            var message0 = createUpdateMessage(scrobblers);
+            var message0 = createUpdateMessage(getScrobblers());
             var message1 = "```";
             for (let i = 0; i < message0.length; i++) {
                 message1 += message0[i] + "\n";
