@@ -15,11 +15,11 @@ Here are a few of the most notable features of the bot:
 
     - List scrobbles example:
 
-    ![til](./gifs/lsgif.gif)
+    ![til](./gifs/lsgif2.gif)
 
     - Multiscrobble example:
 
-    ![til](./gifs/multiscrobblegif.gif)
+    ![til](./gifs/multiscrobblegif2.gif)
 
 * Search up a persons match history in the game [League of Legends](https://www.leagueoflegends.com/en-us/), using the Riot Games API.[```/summoner "username"```]
 

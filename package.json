@@ -25,6 +25,6 @@
     "nodemon": "^2.0.15",
     "play-dl": "^1.8.9",
     "python-shell": "^3.0.1",
-    "ytdl-core": "^4.11.0"
+    "ytdl-core": "^4.11.4"
   }
 }
