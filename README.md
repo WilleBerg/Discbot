@@ -11,11 +11,11 @@ Here are a few of the most notable features of the bot:
 
     - Duoscrobble example:
 
-    ![til](./gifs/duoscrobblegif.gif)
+    ![til](./gifs/duoscrobblegif2.gif)
 
     - List scrobbles example:
 
-    ![til](./gifs/lsgif.gif)
+    ![til](./gifs/lsgif2.gif)
 
     - Multiscrobble example:
 
