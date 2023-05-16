@@ -12,13 +12,19 @@ const {
 const {
     log,
     alwaysLog
-} = require("./logger.js");
+} = require("./logging.js");
 
 const {
     MessageEmbed
 } = require("discord.js");
 
 const SCROBBLER_TIMEOUT = 1000 * 60 * 60 * 5;
+
+let scrobblers = [];
+
+function getScrobblers() {
+    return scrobblers;
+}
 
 async function latestScrobbles(message) {
     var mess = message.content.split(" ");
@@ -529,10 +535,11 @@ async function duoscrobble(message) {
     );
 }
 
-module.exports({
+module.exports = {
     duoscrobble,
     stopscrobbling,
     multiScrobbler,
     latestScrobbles,
-    updateScrobblers
-});
+    updateScrobblers,
+    getScrobblers
+};
