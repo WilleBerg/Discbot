@@ -11,7 +11,7 @@ Here are a few of the most notable features of the bot:
 
     - Duoscrobble example:
 
-    ![til](./gifs/duoscrobblegif2.gif)
+    ![til](./gifs/duoscrobblegif.gif)
 
     - List scrobbles example:
 
@@ -19,7 +19,7 @@ Here are a few of the most notable features of the bot:
 
     - Multiscrobble example:
 
-    ![til](./gifs/multiscrobblegif.gif)
+    ![til](./gifs/multiscrobblegif2.gif)
 
 * Search up a persons match history in the game [League of Legends](https://www.leagueoflegends.com/en-us/), using the Riot Games API.[```/summoner "username"```]
 
