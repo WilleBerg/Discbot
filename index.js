@@ -76,12 +76,12 @@ const {
 } = require("@discordjs/voice");
 
 // IMPORTED FUNCTIONS
-const { sendBoop, boop } = require("./welcomeMessage");
+const { sendBoop, boop } = require("./src/welcomeMessage");
 
 const {
     connect,
     close,
-} = require("./userHandler.js");
+} = require("./src/userHandler.js");
 
 const {
     execute,
@@ -89,7 +89,7 @@ const {
     stop,
     clearQueue,
     removeFromQueue
-} = require('./musicHandler.js');
+} = require('./src/musicHandler.js');
 
 const {
     duoscrobble,
@@ -98,11 +98,11 @@ const {
     latestScrobbles,
     updateScrobblers,
     getScrobblers
-} = require('./scrobbler.js');
+} = require('./src/scrobbler.js');
 
-const { register } = require('./userHandler.js')
+const { register } = require('./src/userHandler.js')
 
-const { log, alwaysLog } = require('./logging.js');
+const { log, alwaysLog } = require('./src/logging.js');
 
 let timer = 0;
 let updateTimer = 0;
